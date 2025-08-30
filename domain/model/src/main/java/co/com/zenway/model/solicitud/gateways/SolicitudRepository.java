@@ -6,4 +6,5 @@ import reactor.core.publisher.Mono;
 public interface SolicitudRepository {
 
     Mono<Solicitud> enviarSolicitudDePrestamo(Solicitud solicitud);
+
 }
