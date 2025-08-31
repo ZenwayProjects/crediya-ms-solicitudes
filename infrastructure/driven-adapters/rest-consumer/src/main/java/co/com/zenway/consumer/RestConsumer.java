@@ -1,5 +1,6 @@
 package co.com.zenway.consumer;
 
+import co.com.zenway.consumer.dto.EmailRecibidoDTO;
 import co.com.zenway.model.solicitud.gateways.UsuarioServiceRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
@@ -53,7 +54,8 @@ public class RestConsumer implements UsuarioServiceRepository/* implements Gatew
                 .get()
                 .uri("/api/v1/usuarios/email/{documento}", documento)
                 .retrieve()
-                .bodyToMono(String.class);
+                .bodyToMono(EmailRecibidoDTO.class)
+                .map(EmailRecibidoDTO::email);
     }
 
     private Mono<String> fallbackEmail(String documento, Throwable ex) {

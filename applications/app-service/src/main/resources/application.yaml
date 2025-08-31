@@ -4,8 +4,6 @@ spring:
   application:
     name: "solicitudes"
   devtools:
-    restart:
-      enabled: false
     add-properties: false
   h2:
     console:
