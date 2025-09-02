@@ -44,6 +44,9 @@ import reactor.core.publisher.Mono;
                         .status(HttpStatus.CREATED)
                         .contentType(MediaType.APPLICATION_JSON)
                         .bodyValue((solicitudGuardada)))
+                .doOnNext(resp -> log.info("Solicitud de prestamo enviada: {}", resp))
+                .doOnError(e -> log.error("Error al enviar la solicitud: {}", e.getMessage(), e))
+                .doFinally(sig -> log.info("Flujo terminado: {}", sig))
                 .onErrorResume(globalErrorHandler::handler);
     }
 }
