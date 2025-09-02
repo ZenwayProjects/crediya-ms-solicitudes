@@ -1,24 +1,24 @@
 package co.com.zenway.r2dbc;
 
+import co.com.zenway.model.solicitud.Solicitud;
 import co.com.zenway.r2dbc.adapter.SolicitudReactiveRepository;
 import co.com.zenway.r2dbc.adapter.SolicitudReactiveRepositoryAdapter;
+import co.com.zenway.r2dbc.entity.SolicitudEntity;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.reactivecommons.utils.ObjectMapper;
-import org.springframework.data.domain.Example;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class SolicitudReactiveRepositoryAdapterTest {
-    // TODO: change four you own tests
 
     @InjectMocks
     SolicitudReactiveRepositoryAdapter repositoryAdapter;
@@ -29,52 +29,79 @@ class SolicitudReactiveRepositoryAdapterTest {
     @Mock
     ObjectMapper mapper;
 
+
     @Test
     void mustFindValueById() {
+        SolicitudEntity entity = new SolicitudEntity();
+        entity.setId(1L);
 
-        when(repository.findById("1")).thenReturn(Mono.just("test"));
-        when(mapper.map("test", Object.class)).thenReturn("test");
+        Solicitud domain = new Solicitud();
+        domain.setId(1L);
 
-        Mono<Object> result = repositoryAdapter.findById("1");
+        when(repository.findById(1L)).thenReturn(Mono.just(entity));
+        when(mapper.map(entity, Solicitud.class)).thenReturn(domain);
+
+        Mono<Solicitud> result = repositoryAdapter.findById(1L);
 
         StepVerifier.create(result)
-                .expectNextMatches(value -> value.equals("test"))
+                .expectNextMatches(value -> value.getId().equals(1L))
                 .verifyComplete();
     }
 
     @Test
     void mustFindAllValues() {
-        when(repository.findAll()).thenReturn(Flux.just("test"));
-        when(mapper.map("test", Object.class)).thenReturn("test");
+        SolicitudEntity entity = new SolicitudEntity();
+        entity.setId(2L);
 
-        Flux<Object> result = repositoryAdapter.findAll();
+        Solicitud domain = new Solicitud();
+        domain.setId(2L);
+
+        when(repository.findAll()).thenReturn(Flux.just(entity));
+        when(mapper.map(entity, Solicitud.class)).thenReturn(domain);
+
+        Flux<Solicitud> result = repositoryAdapter.findAll();
 
         StepVerifier.create(result)
-                .expectNextMatches(value -> value.equals("test"))
+                .expectNextMatches(value -> value.getId().equals(2L))
                 .verifyComplete();
     }
 
     @Test
     void mustFindByExample() {
-        when(repository.findAll(any(Example.class))).thenReturn(Flux.just("test"));
-        when(mapper.map("test", Object.class)).thenReturn("test");
+        SolicitudEntity entity = new SolicitudEntity();
+        entity.setId(3L);
 
-        Flux<Object> result = repositoryAdapter.findByExample("test");
+        Solicitud domain = new Solicitud();
+        domain.setId(3L);
+
+        when(repository.findAll(ArgumentMatchers.any()))
+                .thenReturn(Flux.just(entity));
+        when(mapper.map(entity, Solicitud.class)).thenReturn(domain);
+
+        Flux<Solicitud> result = repositoryAdapter.findByExample(domain);
 
         StepVerifier.create(result)
-                .expectNextMatches(value -> value.equals("test"))
+                .expectNextMatches(value -> value.getId().equals(3L))
                 .verifyComplete();
     }
 
     @Test
     void mustSaveValue() {
-        when(repository.save("test")).thenReturn(Mono.just("test"));
-        when(mapper.map("test", Object.class)).thenReturn("test");
+        SolicitudEntity entity = new SolicitudEntity();
+        entity.setId(4L);
 
-        Mono<Object> result = repositoryAdapter.save("test");
+        Solicitud domain = new Solicitud();
+        domain.setId(4L);
+
+        // Simular que el mapper transforma dominio → entidad y entidad → dominio
+        when(mapper.map(domain, SolicitudEntity.class)).thenReturn(entity);
+        when(repository.save(entity)).thenReturn(Mono.just(entity));
+        when(mapper.map(entity, Solicitud.class)).thenReturn(domain);
+
+        Mono<Solicitud> result = repositoryAdapter.save(domain);
 
         StepVerifier.create(result)
-                .expectNextMatches(value -> value.equals("test"))
+                .expectNextMatches(value -> value.getId().equals(4L))
                 .verifyComplete();
     }
 }

@@ -3,6 +3,10 @@ package co.com.zenway.usecase.solicitud;
 import co.com.zenway.model.solicitud.Solicitud;
 import co.com.zenway.model.solicitud.gateways.SolicitudRepository;
 import co.com.zenway.model.solicitud.gateways.UsuarioServiceRepository;
+import co.com.zenway.model.tipoprestamo.gateways.TipoPrestamoRepository;
+import co.com.zenway.usecase.solicitud.exception.MontoNoValido;
+import co.com.zenway.usecase.solicitud.exception.TipoSolicitudInvalido;
+import co.com.zenway.usecase.solicitud.utils.ConstantesExceptions;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
 
@@ -11,16 +15,40 @@ public class SolicitudUseCase {
 
     private final SolicitudRepository solicitudRepository;
     private final UsuarioServiceRepository usuarioServiceRepository;
+    private final TipoPrestamoRepository tipoPrestamoRepository;
 
+
+    private static final Short ESTADO_PENDIENTE_REVISION = 1;
 
     public Mono<Solicitud> registrarSolicitud(Solicitud solicitud, String documentoIdentidad){
-        return usuarioServiceRepository.obtenerEmailPorDocumento(documentoIdentidad)
+        return validarTipoSolicitudPorId(solicitud.getTipoPrestamoId())
+                .then(tipoPrestamoRepository.buscarPorId(solicitud.getTipoPrestamoId()))
+                .flatMap(tipoPrestamo -> {
+
+                    if(solicitud.getMonto().compareTo(tipoPrestamo.getMontoMaximo()) > 0 ||
+                            solicitud.getMonto().compareTo(tipoPrestamo.getMontoMinimo())< 0){
+
+                        return Mono.error(new MontoNoValido(ConstantesExceptions.MONTO_DEL_PRESTAMO_INVALIDO));
+                    }
+                    return Mono.empty();
+                })
+                .then(usuarioServiceRepository.obtenerEmailPorDocumento(documentoIdentidad))
                 .flatMap(email -> {
                     solicitud.setEmail(email);
+                    solicitud.setEstadoId(ESTADO_PENDIENTE_REVISION);
                     return solicitudRepository.enviarSolicitudDePrestamo(solicitud);
                 });
     }
 
+    private  Mono<Void> validarTipoSolicitudPorId(Short id){
+        return tipoPrestamoRepository.existsById(id)
+                .flatMap(exists ->{
+                    if(Boolean.FALSE.equals(exists)){
+                        return Mono.error(new TipoSolicitudInvalido(ConstantesExceptions.TIPO_SOLICITUD_INVALIDO));
+                    }
+                    return Mono.empty();
+                });
+    }
 
 
 }

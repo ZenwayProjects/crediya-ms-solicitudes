@@ -3,6 +3,8 @@ package co.com.zenway.api;
 import co.com.zenway.api.dto.SolicitudRegistroDTO;
 import co.com.zenway.api.mapper.SolicitudMapper;
 import co.com.zenway.usecase.solicitud.SolicitudUseCase;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
@@ -15,10 +17,11 @@ import reactor.core.publisher.Mono;
 @Component
 @RequiredArgsConstructor
 @Log4j2
-public class SolicitudHandler {
-private  final SolicitudUseCase solicitudUseCase;
-private  final SolicitudMapper solicitudMapper;
-private  final GlobalErrorHandler globalErrorHandler;
+    public class SolicitudHandler {
+    private final SolicitudUseCase solicitudUseCase;
+    private final SolicitudMapper solicitudMapper;
+    private final Validator validator;
+    private  final GlobalErrorHandler globalErrorHandler;
 
 
     public Mono<ServerResponse> solicitarCredito(ServerRequest serverRequest) {
@@ -28,13 +31,19 @@ private  final GlobalErrorHandler globalErrorHandler;
                 .doOnSubscribe(info -> log.info("Iniciando solicitud"))
                 .switchIfEmpty(Mono.error(new IllegalArgumentException("Body requerido")))
                 .flatMap(dto -> {
+                    var violations = validator.validate(dto);
+                    if(!violations.isEmpty()) return Mono.error(new ConstraintViolationException(violations));
+                    return Mono.just(dto);
+                })
+                .flatMap(dto -> {
                     var solicitud = solicitudMapper.toModel(dto);
                     return solicitudUseCase.registrarSolicitud(solicitud, dto.getDocumentoIdentidad());
                 })
+                .map(solicitudMapper::toResponse)
                 .flatMap(solicitudGuardada -> ServerResponse
                         .status(HttpStatus.CREATED)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .bodyValue(solicitudMapper.toResponse(solicitudGuardada)))
+                        .bodyValue((solicitudGuardada)))
                 .onErrorResume(globalErrorHandler::handler);
     }
 }
