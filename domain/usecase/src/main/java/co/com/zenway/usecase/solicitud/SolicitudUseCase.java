@@ -1,6 +1,7 @@
 package co.com.zenway.usecase.solicitud;
 
 import co.com.zenway.model.solicitud.Solicitud;
+import co.com.zenway.model.solicitud.dto.UsuarioInfoSolicitudDTO;
 import co.com.zenway.model.solicitud.gateways.SolicitudRepository;
 import co.com.zenway.model.solicitud.gateways.UsuarioServiceRepository;
 import co.com.zenway.model.tipoprestamo.gateways.TipoPrestamoRepository;
@@ -32,13 +33,19 @@ public class SolicitudUseCase {
                     }
                     return Mono.empty();
                 })
-                .then(usuarioServiceRepository.obtenerEmailPorDocumento(documentoIdentidad))
-                .flatMap(email -> {
-                    solicitud.setEmail(email);
+                .then(obtenerUsuarioInfoPorDocumentoIdentidad(documentoIdentidad))
+                .flatMap(infoSolicitudDTO -> {
+                    solicitud.setEmail(infoSolicitudDTO.email());
                     solicitud.setEstadoId(ESTADO_PENDIENTE_REVISION);
                     return solicitudRepository.enviarSolicitudDePrestamo(solicitud);
                 });
     }
+
+    public Mono<UsuarioInfoSolicitudDTO> obtenerUsuarioInfoPorDocumentoIdentidad(String documentoIdentidad) {
+        return usuarioServiceRepository.obtenerUsuarioInfoPorDocumento(documentoIdentidad);
+
+    }
+
 
     private  Mono<Void> validarTipoSolicitudPorId(Short id){
         return tipoPrestamoRepository.existsById(id)

@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -18,35 +19,45 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 @Log4j2
     public class SolicitudHandler {
-    private final SolicitudUseCase solicitudUseCase;
-    private final SolicitudMapper solicitudMapper;
-    private final Validator validator;
-    private  final GlobalErrorHandler globalErrorHandler;
 
+        private final SolicitudUseCase solicitudUseCase;
+        private final SolicitudMapper solicitudMapper;
+        private final Validator validator;
+        private  final GlobalErrorHandler globalErrorHandler;
 
-    public Mono<ServerResponse> solicitarCredito(ServerRequest serverRequest) {
+        public Mono<ServerResponse> solicitarCredito(ServerRequest serverRequest) {
+            return serverRequest.principal()
+                    .cast(JwtAuthenticationToken.class)
+                    .flatMap(auth -> {
+                        String usuarioIdDelToken = auth.getToken().getSubject();
 
-        return serverRequest
-                .bodyToMono(SolicitudRegistroDTO.class)
-                .doOnSubscribe(info -> log.info("Iniciando solicitud"))
-                .switchIfEmpty(Mono.error(new IllegalArgumentException("Body requerido")))
-                .flatMap(dto -> {
-                    var violations = validator.validate(dto);
-                    if(!violations.isEmpty()) return Mono.error(new ConstraintViolationException(violations));
-                    return Mono.just(dto);
-                })
-                .flatMap(dto -> {
-                    var solicitud = solicitudMapper.toModel(dto);
-                    return solicitudUseCase.registrarSolicitud(solicitud, dto.getDocumentoIdentidad());
-                })
-                .map(solicitudMapper::toResponse)
-                .flatMap(solicitudGuardada -> ServerResponse
-                        .status(HttpStatus.CREATED)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .bodyValue((solicitudGuardada)))
-                .doOnNext(resp -> log.info("Solicitud de prestamo enviada: {}", resp))
-                .doOnError(e -> log.error("Error al enviar la solicitud: {}", e.getMessage(), e))
-                .doFinally(sig -> log.info("Flujo terminado: {}", sig))
-                .onErrorResume(globalErrorHandler::handler);
+                        return serverRequest
+                                .bodyToMono(SolicitudRegistroDTO.class)
+                                .doOnSubscribe(info -> log.info("Iniciando solicitud"))
+                                .switchIfEmpty(Mono.error(new IllegalArgumentException("Body requerido")))
+                                .flatMap(dto -> {
+                                    var violations = validator.validate(dto);
+                                    if(!violations.isEmpty()) return Mono.error(new ConstraintViolationException(violations));
+
+                                    return solicitudUseCase.obtenerUsuarioInfoPorDocumentoIdentidad(dto.getDocumentoIdentidad())
+                                            .flatMap(usuarioInfo -> {
+                                                if(!usuarioInfo.idUsuario().toString().equals(usuarioIdDelToken)){
+                                                    return Mono.error(new RuntimeException("No puedes crear solicitud para otro usuario"));
+                                                }
+
+                                        var solicitud = solicitudMapper.toModel(dto);
+                                        return solicitudUseCase.registrarSolicitud(solicitud, dto.getDocumentoIdentidad());
+                                            });
+                                })
+                                .map(solicitudMapper::toResponse)
+                                .flatMap(solicitudGuardada -> ServerResponse
+                                        .status(HttpStatus.CREATED)
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .bodyValue((solicitudGuardada)))
+                                .doOnNext(resp -> log.info("Solicitud de prestamo enviada: {}", resp))
+                                .doOnError(e -> log.error("Error al enviar la solicitud: {}", e.getMessage(), e))
+                                .doFinally(sig -> log.info("Flujo terminado: {}", sig))
+                                .onErrorResume(globalErrorHandler::handler);
+                    });
+        }
     }
-}

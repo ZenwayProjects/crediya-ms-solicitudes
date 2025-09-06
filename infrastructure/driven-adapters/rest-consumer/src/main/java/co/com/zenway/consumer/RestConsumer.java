@@ -1,10 +1,14 @@
 package co.com.zenway.consumer;
 
-import co.com.zenway.consumer.dto.EmailRecibidoDTO;
+import co.com.zenway.consumer.dto.UsuarioInfoSolicitudBoundaryDTO;
+import co.com.zenway.model.solicitud.dto.UsuarioInfoSolicitudDTO;
 import co.com.zenway.model.solicitud.gateways.UsuarioServiceRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -16,49 +20,36 @@ public class RestConsumer implements UsuarioServiceRepository/* implements Gatew
     private final WebClient client;
 
 
-    // these methods are an example that illustrates the implementation of WebClient.
-    // You should use the methods that you implement from the Gateway from the domain.
-    @CircuitBreaker(name = "testGet" /*, fallbackMethod = "testGetOk"*/)
-    public Mono<ObjectResponse> testGet() {
-        return client
-                .get()
-                .retrieve()
-                .bodyToMono(ObjectResponse.class);
-    }
-
-// Possible fallback method
-//    public Mono<String> testGetOk(Exception ignored) {
-//        return client
-//                .get() // TODO: change for another endpoint or destination
-//                .retrieve()
-//                .bodyToMono(String.class);
-//    }
-
-    @CircuitBreaker(name = "testPost")
-    public Mono<ObjectResponse> testPost() {
-        ObjectRequest request = ObjectRequest.builder()
-            .val1("exampleval1")
-            .val2("exampleval2")
-            .build();
-        return client
-                .post()
-                .body(Mono.just(request), ObjectRequest.class)
-                .retrieve()
-                .bodyToMono(ObjectResponse.class);
-    }
 
     @Override
     @CircuitBreaker(name = "usuarioService", fallbackMethod = "fallbackEmail")
-    public Mono<String> obtenerEmailPorDocumento(String documento) {
-        return client
-                .get()
-                .uri("/api/v1/usuarios/email/{documento}", documento)
-                .retrieve()
-                .bodyToMono(EmailRecibidoDTO.class)
-                .map(EmailRecibidoDTO::email);
+    public Mono<UsuarioInfoSolicitudDTO> obtenerUsuarioInfoPorDocumento(String documento) {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(SecurityContext::getAuthentication)
+                .flatMap(auth -> {
+                    Object credentials = auth.getCredentials();
+                    String token;
+                    if(credentials instanceof Jwt jwt){
+                        token = jwt.getTokenValue();
+                    }else {
+                        token = credentials.toString();
+                    }
+                    return client
+                            .get()
+                            .uri("/api/v1/usuarios/email/{documento}", documento)
+                            .headers(header -> header.setBearerAuth(token))
+                            .retrieve()
+                            .bodyToMono(UsuarioInfoSolicitudBoundaryDTO.class)
+                            .map(boundary -> new UsuarioInfoSolicitudDTO(
+                                    boundary.id(),
+                                    boundary.email()
+                            ))
+                            .doOnError(e -> log.info("Error al llamar al ms-auth: {} :{}", token, e.getMessage()));
+                });
     }
 
-    private Mono<String> fallbackEmail(String documento, Throwable ex) {
+
+    private Mono<UsuarioInfoSolicitudDTO> fallbackEmail(String documento, Throwable ex) {
         log.info("Error consultando usuarios: {}", ex.getMessage());
         return Mono.error(new RuntimeException("Servicio no disponible"));
     }
