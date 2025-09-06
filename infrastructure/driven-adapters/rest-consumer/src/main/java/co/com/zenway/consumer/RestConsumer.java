@@ -44,7 +44,7 @@ public class RestConsumer implements UsuarioServiceRepository/* implements Gatew
                                     boundary.id(),
                                     boundary.email()
                             ))
-                            .doOnError(e -> log.info("Error al llamar al ms-auth: {} :{}", token, e.getMessage()));
+                            .doOnError(e -> log.info("Error al llamar el ms-auth: {} :{}", token, e.getMessage()));
                 });
     }
 
