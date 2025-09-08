@@ -47,7 +47,19 @@ public class SolicitudRouterDoc {
                                             mediaType = "application/json",
                                             schema = @Schema(implementation = SolicitudResponseDTO.class)
                                     )
-                            )
+                            ),
+                            @ApiResponse(
+                                    responseCode = "400",
+                                    description = "Solicitud inválida, datos incorrectos o incompletos"
+                            ),
+                            @ApiResponse(
+                                    responseCode = "401",
+                                    description = "Usuario no autenticado"
+                            ),
+                            @ApiResponse(
+                                    responseCode = "403",
+                                    description = "Acceso denegado, el usuario no tiene permisos para realizar esta acción"
+                            ),
                     }
             )
     )
