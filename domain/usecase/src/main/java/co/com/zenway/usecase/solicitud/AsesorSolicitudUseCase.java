@@ -7,6 +7,7 @@ import co.com.zenway.model.solicitud.gateways.UsuarioServiceRepository;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -40,13 +41,19 @@ public class AsesorSolicitudUseCase {
                             .collectMap(Usuario::getEmail)
                             .flatMapMany(usuariosPorEmail ->
                                     Flux.fromIterable(solicitudesPendientesList)
-                                            .map(dto -> {
+                                            .flatMap(dto -> {
                                                 Usuario usuario = usuariosPorEmail.get(dto.getEmail());
                                                 if (usuario != null) {
                                                     dto.setNombre(usuario.getNombreCompleto());
                                                     dto.setSalarioBase(usuario.getSalarioBase());
                                                 }
-                                                return dto;
+                                                return solicitudRepository.obtenerSumaDeudaTotal(dto.getEmail())
+                                                        .defaultIfEmpty(BigDecimal.ZERO)
+                                                        .map(deudaTotal -> {
+                                                            dto.setDeudaTotalAprobadaMensual(deudaTotal);
+                                                            return dto;
+                                                        });
+
                                             })
                             );
                 });

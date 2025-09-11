@@ -10,6 +10,7 @@ import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface SolicitudReactiveRepository extends ReactiveCrudRepository<SolicitudEntity, Long>, ReactiveQueryByExampleExecutor<SolicitudEntity> {
@@ -36,6 +37,17 @@ public interface SolicitudReactiveRepository extends ReactiveCrudRepository<Soli
             @Param("limit") int limit,
             @Param("offset") int offset
             );
+    @Query("""
+            SELECT COALESCE(SUM(s.monto), 0) as deudaTotalAprobada
+            FROM solicitud s
+            JOIN estados e ON s.id_estado = e.id_estado\s
+            WHERE s.email = :email AND e.nombre = 'Aprobado';
+           """
+    )Mono<BigDecimal> obtenerDeudaTotalAprobadaQuery(String email);
+
+
+
+
 
 
 

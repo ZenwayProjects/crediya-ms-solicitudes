@@ -11,6 +11,7 @@ import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Repository
@@ -41,6 +42,11 @@ public class SolicitudReactiveRepositoryAdapter extends ReactiveAdapterOperation
     public Flux<SolicitudesPendientesDto> obtenerSolicitudesPendientes(List<String> estadoSolicitud,
                                                                        String tipoPrestamoNombre, int limit, int offset) {
         return repository.obtenerSolicitudesPendientesQuery(estadoSolicitud, tipoPrestamoNombre, limit, offset);
+    }
+
+    @Override
+    public Mono<BigDecimal> obtenerSumaDeudaTotal(String email) {
+        return repository.obtenerDeudaTotalAprobadaQuery(email);
     }
 
 
