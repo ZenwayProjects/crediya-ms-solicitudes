@@ -2,6 +2,8 @@ package co.com.zenway.api;
 
 import co.com.zenway.api.dto.SolicitudRegistroDTO;
 import co.com.zenway.api.mapper.SolicitudMapper;
+import co.com.zenway.model.solicitud.dto.SolicitudesPendientesDto;
+import co.com.zenway.usecase.solicitud.AsesorSolicitudUseCase;
 import co.com.zenway.usecase.solicitud.SolicitudUseCase;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
@@ -16,12 +18,17 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
+import static co.com.zenway.api.utils.LoggerConstantes.FLUJO_TERMINADO;
+
 @Component
 @RequiredArgsConstructor
 @Log4j2
     public class SolicitudHandler {
 
         private final SolicitudUseCase solicitudUseCase;
+        private final AsesorSolicitudUseCase asesorSolicitudUseCase;
         private final SolicitudMapper solicitudMapper;
         private final Validator validator;
         private  final GlobalErrorHandler globalErrorHandler;
@@ -57,12 +64,32 @@ import reactor.core.publisher.Mono;
                                         .bodyValue((solicitudGuardada)))
                                 .doOnNext(resp -> log.info("Solicitud de prestamo enviada: {}", resp))
                                 .doOnError(e -> log.error("Error al enviar la solicitud: {}", e.getMessage(), e))
-                                .doFinally(sig -> log.info("Flujo terminado: {}", sig))
+                                .doFinally(sig -> log.info(FLUJO_TERMINADO, sig))
                                 .onErrorResume(globalErrorHandler::handler);
                     });
         }
 
         public Mono<ServerResponse> listarSolicitudesPendientes(ServerRequest serverRequest){
-            return Mono.empty();
+            return serverRequest.principal()
+                    .cast(JwtAuthenticationToken.class)
+                    .flatMap(auth -> {
+                        List<String> estados = serverRequest.queryParams().get("estados");
+                        String tipoPrestamo = serverRequest.queryParam("tipoPrestamo").orElse(null);
+                        int page = Integer.parseInt(serverRequest.queryParam("page").orElse("0"));
+                        int size = Integer.parseInt(serverRequest.queryParam("size").orElse("10"));
+
+                        return asesorSolicitudUseCase
+                                .buscarSolicitudesPendientes(estados, tipoPrestamo, page, size)
+                                .collectList()
+                                .flatMap(listaSolicitudes ->
+                                    ServerResponse.ok()
+                                            .contentType(MediaType.APPLICATION_JSON)
+                                            .bodyValue(listaSolicitudes)
+                                );
+                    })
+                    .doOnNext(resp -> log.info("Lista de solicitudes: {}", resp))
+                    .doOnError(e -> log.error("Error al listar las solicitudes pendientes"))
+                    .doFinally(sig -> log.info(FLUJO_TERMINADO, sig))
+                    .onErrorResume(globalErrorHandler::handler);
         }
     }

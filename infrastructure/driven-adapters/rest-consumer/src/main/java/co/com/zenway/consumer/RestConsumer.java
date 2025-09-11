@@ -2,6 +2,7 @@ package co.com.zenway.consumer;
 
 import co.com.zenway.consumer.dto.UsuarioInfoSolicitudResponseDTO;
 import co.com.zenway.consumer.dto.UsuarioResponseDTO;
+import co.com.zenway.consumer.dto.UsuariosPorEmailsRequestDTO;
 import co.com.zenway.consumer.mapper.UsuarioMapper;
 import co.com.zenway.model.Usuario.Usuario;
 import co.com.zenway.model.solicitud.dto.UsuarioInfoSolicitudDTO;
@@ -76,7 +77,7 @@ public class RestConsumer implements UsuarioServiceRepository/* implements Gatew
                             .post()
                             .uri("/api/v1/usuarios-por-emails")
                             .headers(header -> header.setBearerAuth(token))
-                            .bodyValue(emails)
+                            .bodyValue(new UsuariosPorEmailsRequestDTO(emails))
                             .retrieve()
                             .bodyToFlux(UsuarioResponseDTO.class)
                             .map(usuarioMapper::toDominio);

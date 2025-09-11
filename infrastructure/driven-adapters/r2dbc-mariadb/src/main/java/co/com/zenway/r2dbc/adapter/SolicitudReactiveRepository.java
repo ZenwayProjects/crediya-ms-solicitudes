@@ -21,18 +21,20 @@ public interface SolicitudReactiveRepository extends ReactiveCrudRepository<Soli
         s.email,
         tp.nombre AS tipo_prestamo,
         tp.tasa_interes AS tasa_interes,
-        e.nombre  AS estado
+        e.nombre  AS estado_solicitud
     FROM solicitud s
     JOIN tipo_prestamo tp ON tp.id_tipo_prestamo = s.id_tipo_prestamo
     JOIN estados e        ON e.id_estado        = s.id_estado
     WHERE e.nombre IN (:estados)
       AND (:tipoPrestamoNombre IS NULL OR LOWER(tp.nombre) LIKE LOWER(CONCAT('%', :tipoPrestamoNombre, '%')))
-    ORDER BY s.id_solicitud ASC ;
+    ORDER BY s.id_solicitud ASC LIMIT :limit OFFSET :offset;
 
     """)
-    Flux<SolicitudesPendientesDto> solicitudesPendientes(
+    Flux<SolicitudesPendientesDto> obtenerSolicitudesPendientesQuery(
             @Param("estados")List<String> estadosSolicitudNombre,
-            @Param("tipoPrestamoNombre") String tipoPrestamoNombre
+            @Param("tipoPrestamoNombre") String tipoPrestamoNombre,
+            @Param("limit") int limit,
+            @Param("offset") int offset
             );
 
 

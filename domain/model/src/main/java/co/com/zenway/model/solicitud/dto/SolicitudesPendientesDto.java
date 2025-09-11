@@ -13,6 +13,7 @@ public class SolicitudesPendientesDto {
     private String nombre;
     private String tipoPrestamo;
     private BigDecimal tasaInteres;
+    private BigDecimal salarioBase;
     private String estadoSolicitud;
     private BigDecimal deudaTotalAprobadaMensual;
 

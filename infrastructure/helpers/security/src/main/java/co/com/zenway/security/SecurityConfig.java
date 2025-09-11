@@ -34,7 +34,7 @@ public class SecurityConfig {
                                 "/v3/api-docs/**"
                         ).permitAll()
                         .pathMatchers(HttpMethod.POST,"/api/v1/solicitud").hasRole("CLIENTE")
-                        .pathMatchers(HttpMethod.GET,"/api/v1/solicitud").hasRole("ASESOR")
+                        .pathMatchers(HttpMethod.GET,"/api/v1/solicitud").hasAnyRole("ASESOR", "ADMINISTRADOR")
                         .anyExchange().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 ->
