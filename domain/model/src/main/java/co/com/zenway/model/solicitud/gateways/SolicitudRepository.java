@@ -7,4 +7,9 @@ public interface SolicitudRepository {
 
     Mono<Solicitud> enviarSolicitudDePrestamo(Solicitud solicitud);
 
+
+
+
+
+
 }

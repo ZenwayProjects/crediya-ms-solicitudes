@@ -13,6 +13,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Component
@@ -59,5 +60,9 @@ import reactor.core.publisher.Mono;
                                 .doFinally(sig -> log.info("Flujo terminado: {}", sig))
                                 .onErrorResume(globalErrorHandler::handler);
                     });
+        }
+
+        public Mono<ServerResponse> listarSolicitudesPendientes(ServerRequest serverRequest){
+            return Mono.empty();
         }
     }

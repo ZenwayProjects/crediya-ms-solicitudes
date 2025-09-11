@@ -2,7 +2,7 @@ package co.com.zenway.consumer.dto;
 
 
 
-public record UsuarioInfoSolicitudBoundaryDTO(
+public record UsuarioInfoSolicitudResponseDTO(
         Long id,
         String email
 ) {
