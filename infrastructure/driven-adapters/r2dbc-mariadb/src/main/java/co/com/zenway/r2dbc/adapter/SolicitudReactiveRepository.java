@@ -1,6 +1,7 @@
 package co.com.zenway.r2dbc.adapter;
 
 import co.com.zenway.model.solicitud.Solicitud;
+import co.com.zenway.model.solicitud.dto.DeudaTotalAprobadaPorUsuarioDto;
 import co.com.zenway.model.solicitud.dto.SolicitudesPendientesDto;
 import co.com.zenway.r2dbc.entity.SolicitudEntity;
 import org.springframework.data.r2dbc.repository.Query;
@@ -37,13 +38,18 @@ public interface SolicitudReactiveRepository extends ReactiveCrudRepository<Soli
             @Param("limit") int limit,
             @Param("offset") int offset
             );
+
     @Query("""
-            SELECT COALESCE(SUM(s.monto), 0) as deudaTotalAprobada
-            FROM solicitud s
-            JOIN estados e ON s.id_estado = e.id_estado\s
-            WHERE s.email = :email AND e.nombre = 'Aprobado';
-           """
-    )Mono<BigDecimal> obtenerDeudaTotalAprobadaQuery(String email);
+        SELECT s.email,
+               COALESCE(SUM(s.monto),0) AS deuda_total_aprobada
+        FROM solicitud s
+        JOIN estados e ON s.id_estado = e.id_estado
+        WHERE e.nombre = 'Aprobado'
+          AND s.email IN (:emails)
+        GROUP BY s.email
+       """)
+    Flux<DeudaTotalAprobadaPorUsuarioDto> obtenerDeudaTotalAprobadaQuery(
+            @Param("emails") List<String> emails);
 
 
 

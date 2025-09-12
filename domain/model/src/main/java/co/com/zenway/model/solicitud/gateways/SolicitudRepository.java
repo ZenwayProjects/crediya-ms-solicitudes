@@ -1,11 +1,11 @@
 package co.com.zenway.model.solicitud.gateways;
 
 import co.com.zenway.model.solicitud.Solicitud;
+import co.com.zenway.model.solicitud.dto.DeudaTotalAprobadaPorUsuarioDto;
 import co.com.zenway.model.solicitud.dto.SolicitudesPendientesDto;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 public interface SolicitudRepository {
@@ -14,7 +14,7 @@ public interface SolicitudRepository {
 
     Flux<SolicitudesPendientesDto> obtenerSolicitudesPendientes(List<String> estadoSolicitud, String tipoPrestamoNombre, int limit, int offset);
 
-    Mono<BigDecimal> obtenerSumaDeudaTotal(String email);
+    Flux<DeudaTotalAprobadaPorUsuarioDto> obtenerSumaDeudaTotalPorEmails(List<String> emails);
 
 
 

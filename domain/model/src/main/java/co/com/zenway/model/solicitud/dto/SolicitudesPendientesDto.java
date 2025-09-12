@@ -15,6 +15,6 @@ public class SolicitudesPendientesDto {
     private BigDecimal tasaInteres;
     private BigDecimal salarioBase;
     private String estadoSolicitud;
-    private BigDecimal deudaTotalAprobadaMensual;
+    private BigDecimal deudaTotalAprobada;
 
 }

@@ -1,6 +1,7 @@
 package co.com.zenway.r2dbc.adapter;
 
 import co.com.zenway.model.solicitud.Solicitud;
+import co.com.zenway.model.solicitud.dto.DeudaTotalAprobadaPorUsuarioDto;
 import co.com.zenway.model.solicitud.dto.SolicitudesPendientesDto;
 import co.com.zenway.model.solicitud.gateways.SolicitudRepository;
 import co.com.zenway.r2dbc.entity.SolicitudEntity;
@@ -11,7 +12,6 @@ import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Repository
@@ -44,9 +44,8 @@ public class SolicitudReactiveRepositoryAdapter extends ReactiveAdapterOperation
         return repository.obtenerSolicitudesPendientesQuery(estadoSolicitud, tipoPrestamoNombre, limit, offset);
     }
 
-    @Override
-    public Mono<BigDecimal> obtenerSumaDeudaTotal(String email) {
-        return repository.obtenerDeudaTotalAprobadaQuery(email);
+    public Flux<DeudaTotalAprobadaPorUsuarioDto> obtenerSumaDeudaTotalPorEmails(List<String> emails) {
+        return repository.obtenerDeudaTotalAprobadaQuery(emails);
     }
 
 
