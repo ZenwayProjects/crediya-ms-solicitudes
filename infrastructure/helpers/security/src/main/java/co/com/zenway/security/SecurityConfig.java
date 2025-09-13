@@ -1,7 +1,6 @@
 package co.com.zenway.security;
 
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -31,7 +30,8 @@ public class SecurityConfig {
                                 "/actuator/**",
                                 "/health",
                                 "/webjars/swagger-ui/**",
-                                "/v3/api-docs/**"
+                                "/v3/api-docs/**",
+                                "swagger-ui/**"
                         ).permitAll()
                         .pathMatchers(HttpMethod.POST,"/api/v1/solicitud").hasRole("CLIENTE")
                         .pathMatchers(HttpMethod.GET,"/api/v1/solicitud").hasAnyRole("ASESOR", "ADMINISTRADOR")

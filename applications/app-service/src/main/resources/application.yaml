@@ -27,15 +27,15 @@ cors:
   allowed-origins: "http://localhost:4200,http://localhost:8080,http://localhost:8081"
 adapters:
   r2dbc:
-    host: "localhost"
+    host: ${DB_HOST_SOLICITUDES}
     port: 3306
-    database: "${DB_NAME}"
-    username: "${DB_USER}"
-    password: "${DB_PASSWORD}"
+    database: "${DB_NAME_SOLICITUDES}"
+    username: "${DB_USER_SOLICITUDES}"
+    password: "${DB_PASSWORD_SOLICITUDES}"
 adapter:
   restconsumer:
     timeout: 5000
-    url: "http://localhost:8080"
+    url: ${AUTH_SERVICE_URL}
 resilience4j:
   circuitbreaker:
     instances:

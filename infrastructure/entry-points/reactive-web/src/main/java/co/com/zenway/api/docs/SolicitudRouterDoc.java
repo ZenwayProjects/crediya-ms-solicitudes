@@ -3,6 +3,7 @@ package co.com.zenway.api.docs;
 import co.com.zenway.api.SolicitudHandler;
 import co.com.zenway.api.dto.SolicitudRegistroDTO;
 import co.com.zenway.api.dto.SolicitudResponseDTO;
+import co.com.zenway.model.solicitud.dto.SolicitudesPendientesDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
+import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
 import static org.springframework.web.reactive.function.server.RequestPredicates.POST;
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 
@@ -65,6 +67,36 @@ public class SolicitudRouterDoc {
     )
     public RouterFunction<ServerResponse> usuarioRoutes(SolicitudHandler solicitudHandler) {
         return route(POST("/api/v1/solicitud"), solicitudHandler::solicitarCredito);
+    }
+
+    @Bean
+    @RouterOperation(
+            path = "/api/v1/solicitudes/pendientes",
+            produces = {"application/json; charset=UTF-8"},
+            method = RequestMethod.GET,
+            beanClass = SolicitudHandler.class,
+            beanMethod = "listarSolicitudesPendientes",
+            operation = @Operation(
+                    operationId = "listarSolicitudesPendientes",
+                    summary = "Lista las solicitudes pendientes",
+                    description = "Devuelve un listado paginado de solicitudes pendientes con información adicional del usuario",
+                    responses = {
+                            @ApiResponse(
+                                    responseCode = "200",
+                                    description = "Listado de solicitudes pendientes",
+                                    content = @Content(
+                                            mediaType = "application/json",
+                                            schema = @Schema(implementation = SolicitudesPendientesDto.class)
+                                    )
+                            ),
+                            @ApiResponse(responseCode = "401", description = "Usuario no autenticado"),
+                            @ApiResponse(responseCode = "403", description = "Acceso denegado"),
+                            @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+                    }
+            )
+    )
+    public RouterFunction<ServerResponse> listarSolicitudesPendientesRoute(SolicitudHandler solicitudHandler) {
+        return route(GET("/api/v1/solicitud"), solicitudHandler::listarSolicitudesPendientes);
     }
 
 }
