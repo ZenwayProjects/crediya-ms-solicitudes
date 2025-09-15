@@ -1,4 +1,4 @@
-package co.com.zenway.api;
+package co.com.zenway.api.exceptions;
 
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;

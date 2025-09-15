@@ -1,6 +1,6 @@
 package co.com.zenway.api.utils;
 
-public class LoggerConstantes {
+public final class LoggerConstantes {
     private LoggerConstantes() {
         throw new IllegalArgumentException("Clase de utils de entry-point");
     }

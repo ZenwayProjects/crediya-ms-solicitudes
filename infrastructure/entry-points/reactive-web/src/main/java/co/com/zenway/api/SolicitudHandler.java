@@ -1,8 +1,8 @@
 package co.com.zenway.api;
 
 import co.com.zenway.api.dto.SolicitudRegistroDTO;
+import co.com.zenway.api.exceptions.GlobalErrorHandler;
 import co.com.zenway.api.mapper.SolicitudMapper;
-import co.com.zenway.model.solicitud.dto.SolicitudesPendientesDto;
 import co.com.zenway.usecase.solicitud.AsesorSolicitudUseCase;
 import co.com.zenway.usecase.solicitud.SolicitudUseCase;
 import jakarta.validation.ConstraintViolationException;
@@ -15,7 +15,6 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
