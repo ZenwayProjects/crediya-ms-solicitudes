@@ -39,9 +39,9 @@ public class SolicitudReactiveRepositoryAdapter extends ReactiveAdapterOperation
     }
 
     @Override
-    public Flux<SolicitudesPendientesDto> obtenerSolicitudesPendientes(List<String> estadoSolicitud,
+    public Flux<SolicitudesPendientesDto> obtenerSolicitudesPendientes(List<String> estadoSolicitud, int estadosContador,
                                                                        String tipoPrestamoNombre, int limit, int offset) {
-        return repository.obtenerSolicitudesPendientesQuery(estadoSolicitud, tipoPrestamoNombre, limit, offset);
+        return repository.obtenerSolicitudesPendientesQuery(estadoSolicitud, estadosContador, tipoPrestamoNombre, limit, offset);
     }
 
     public Flux<DeudaTotalAprobadaPorUsuarioDto> obtenerSumaDeudaTotalPorEmails(List<String> emails) {

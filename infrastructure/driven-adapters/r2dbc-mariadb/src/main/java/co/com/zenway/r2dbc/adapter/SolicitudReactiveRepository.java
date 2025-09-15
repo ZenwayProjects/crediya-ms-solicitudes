@@ -1,6 +1,5 @@
 package co.com.zenway.r2dbc.adapter;
 
-import co.com.zenway.model.solicitud.Solicitud;
 import co.com.zenway.model.solicitud.dto.DeudaTotalAprobadaPorUsuarioDto;
 import co.com.zenway.model.solicitud.dto.SolicitudesPendientesDto;
 import co.com.zenway.r2dbc.entity.SolicitudEntity;
@@ -9,15 +8,12 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.query.ReactiveQueryByExampleExecutor;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-
-import java.math.BigDecimal;
 import java.util.List;
 
 public interface SolicitudReactiveRepository extends ReactiveCrudRepository<SolicitudEntity, Long>, ReactiveQueryByExampleExecutor<SolicitudEntity> {
 
     @Query("""
-            SELECT
+    SELECT
         s.monto,
         s.plazo,
         s.email,
@@ -26,18 +22,20 @@ public interface SolicitudReactiveRepository extends ReactiveCrudRepository<Soli
         e.nombre  AS estado_solicitud
     FROM solicitud s
     JOIN tipo_prestamo tp ON tp.id_tipo_prestamo = s.id_tipo_prestamo
-    JOIN estados e        ON e.id_estado        = s.id_estado
-    WHERE e.nombre IN (:estados)
+    JOIN estados e ON e.id_estado = s.id_estado
+    WHERE ( :estadosCount = 0 OR e.nombre IN (:estados) )
       AND (:tipoPrestamoNombre IS NULL OR LOWER(tp.nombre) LIKE LOWER(CONCAT('%', :tipoPrestamoNombre, '%')))
-    ORDER BY s.id_solicitud ASC LIMIT :limit OFFSET :offset;
-
-    """)
+    ORDER BY s.id_solicitud ASC
+    LIMIT :limit OFFSET :offset
+""")
     Flux<SolicitudesPendientesDto> obtenerSolicitudesPendientesQuery(
-            @Param("estados")List<String> estadosSolicitudNombre,
+            @Param("estados") List<String> estadosSolicitudNombre,
+            @Param("estadosCount") int estadosCount,
             @Param("tipoPrestamoNombre") String tipoPrestamoNombre,
             @Param("limit") int limit,
             @Param("offset") int offset
-            );
+    );
+
 
     @Query("""
         SELECT s.email,

@@ -31,7 +31,13 @@ public class AsesorSolicitudUseCase {
     ) {
         int offset = page * size;
 
-        return solicitudRepository.obtenerSolicitudesPendientes(estadosSolicitud, tipoPrestamoNombre, size, offset)
+        List<String> filtrosEstados = (estadosSolicitud == null || estadosSolicitud.isEmpty())
+                ? List.of("__VACIO__")
+                : estadosSolicitud;
+
+        int estadosContador = (estadosSolicitud == null) ? 0 : estadosSolicitud.size();
+
+        return solicitudRepository.obtenerSolicitudesPendientes(filtrosEstados, estadosContador, tipoPrestamoNombre, size, offset)
                 .collectList()
                 .flatMapMany(solicitudesPendientesList -> {
                     List<String> emails = solicitudesPendientesList.stream()

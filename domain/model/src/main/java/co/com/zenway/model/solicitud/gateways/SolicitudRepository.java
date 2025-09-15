@@ -12,7 +12,7 @@ public interface SolicitudRepository {
 
     Mono<Solicitud> enviarSolicitudDePrestamo(Solicitud solicitud);
 
-    Flux<SolicitudesPendientesDto> obtenerSolicitudesPendientes(List<String> estadoSolicitud, String tipoPrestamoNombre, int limit, int offset);
+    Flux<SolicitudesPendientesDto> obtenerSolicitudesPendientes(List<String> estadoSolicitud, int estadosContador, String tipoPrestamoNombre, int limit, int offset);
 
     Flux<DeudaTotalAprobadaPorUsuarioDto> obtenerSumaDeudaTotalPorEmails(List<String> emails);
 
