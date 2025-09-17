@@ -7,6 +7,7 @@ import co.com.zenway.model.solicitud.gateways.SolicitudRepository;
 import co.com.zenway.r2dbc.entity.SolicitudEntity;
 import co.com.zenway.r2dbc.helper.ReactiveAdapterOperations;
 import org.reactivecommons.utils.ObjectMapper;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
@@ -22,7 +23,8 @@ public class SolicitudReactiveRepositoryAdapter extends ReactiveAdapterOperation
         SolicitudReactiveRepository
 > implements SolicitudRepository {
             private final TransactionalOperator transactionalOperator;
-    public SolicitudReactiveRepositoryAdapter(SolicitudReactiveRepository repository, ObjectMapper mapper, TransactionalOperator transactionalOperator) {
+    private final R2dbcEntityTemplate template;
+    public SolicitudReactiveRepositoryAdapter(SolicitudReactiveRepository repository, ObjectMapper mapper, TransactionalOperator transactionalOperator, R2dbcEntityTemplate template) {
         /**
          *  Could be use mapper.mapBuilder if your domain model implement builder pattern
          *  super(repository, mapper, d -> mapper.mapBuilder(d,ObjectModel.ObjectModelBuilder.class).build());
@@ -30,6 +32,7 @@ public class SolicitudReactiveRepositoryAdapter extends ReactiveAdapterOperation
          */
         super(repository, mapper, d -> mapper.map(d, Solicitud.class/* change for domain model */));
         this.transactionalOperator = transactionalOperator;
+        this.template = template;
     }
 
 
@@ -46,6 +49,27 @@ public class SolicitudReactiveRepositoryAdapter extends ReactiveAdapterOperation
 
     public Flux<DeudaTotalAprobadaPorUsuarioDto> obtenerSumaDeudaTotalPorEmails(List<String> emails) {
         return repository.obtenerDeudaTotalAprobadaQuery(emails);
+    }
+
+    @Override
+    public Mono<Solicitud> obtenerSolicitudPorId(Long solicitudId) {
+        return repository.findById(solicitudId)
+                .map(entity -> mapper.map(entity, Solicitud.class));
+    }
+
+    @Override
+    public Mono<Long> actualizarEstadoSolicitud(Long solicitudId, Short nuevoEstado) {
+        return template.getDatabaseClient()
+                .sql("""
+                    UPDATE solicitud
+                    SET id_estado = :nuevoEstado
+                    WHERE id_solicitud = :solicitudId
+                    AND id_estado = 1
+                """)
+                .bind("nuevoEstado", nuevoEstado)
+                .bind("solicitudId", solicitudId)
+                .fetch()
+                .rowsUpdated();
     }
 
 

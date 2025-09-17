@@ -1,6 +1,9 @@
 package co.com.zenway.usecase.solicitud;
 
+import co.com.zenway.model.sqs.MensajeSQSDto;
+import co.com.zenway.model.sqs.gateways.MensajeSQSRepository;
 import co.com.zenway.model.Usuario.Usuario;
+import co.com.zenway.model.solicitud.Solicitud;
 import co.com.zenway.model.solicitud.dto.DeudaTotalAprobadaPorUsuarioDto;
 import co.com.zenway.model.solicitud.dto.SolicitudesPendientesDto;
 import co.com.zenway.model.solicitud.gateways.SolicitudRepository;
@@ -13,11 +16,16 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
+import static co.com.zenway.usecase.solicitud.utils.ConstantesAsesor.CORREO_POR_DEFECTO;
+import static co.com.zenway.usecase.solicitud.utils.ConstantesAsesor.ESTADO_SOLICITUD_APROBADO;
+
 @RequiredArgsConstructor
 public class AsesorSolicitudUseCase {
 
     private final SolicitudRepository solicitudRepository;
     private final UsuarioServiceRepository usuarioServiceRepository;
+    private final MensajeSQSRepository mensajeSQSRepository;
+
 
 
 
@@ -77,6 +85,52 @@ public class AsesorSolicitudUseCase {
 
                 });
     }
+
+
+
+    public Mono<Solicitud> actualizarEstadoSolicitud(Long solicitudId, Short nuevoEstadoId){
+        return solicitudRepository.actualizarEstadoSolicitud(solicitudId, nuevoEstadoId)
+                .flatMap(filasActualizadas -> {
+                    if(filasActualizadas > 0){
+                        return solicitudRepository.obtenerSolicitudPorId(solicitudId)
+                                .flatMap(solicitud -> {
+                                    if(nuevoEstadoId.equals(ESTADO_SOLICITUD_APROBADO)){
+                                        return mensajeSQSRepository
+                                                .enviarNotificacionDeEstadoCredito(
+                                                        buildMensajeAprobacion(solicitudId, CORREO_POR_DEFECTO, solicitud.getMonto()))
+                                                .thenReturn(solicitud);
+                                    }
+                                    return mensajeSQSRepository
+                                            .enviarNotificacionDeEstadoCredito(
+                                                    buildMensajeRechazo(solicitudId, CORREO_POR_DEFECTO, solicitud.getMonto()))
+                                            .thenReturn(solicitud);
+                                });
+
+                    }
+
+                    return Mono.error(new IllegalStateException("No se actualiza ninguna solicitud"));
+                });
+    }
+
+
+    private MensajeSQSDto buildMensajeAprobacion(Long solicitudId, String email, BigDecimal monto) {
+        return new MensajeSQSDto(
+                solicitudId,
+                email,
+                "Prueba de aprobación",
+                "¡Tu crédito por el monto de:" + monto +  "fue aprobado!"
+        );
+    }
+
+    private MensajeSQSDto buildMensajeRechazo(Long solicitudId, String email, BigDecimal monto) {
+        return new MensajeSQSDto(
+                solicitudId,
+                email,
+                "Prueba de rechazo",
+                "Lo sentimos, tu crédito por el monto de:" + monto +" fue rechazado."
+        );
+    }
+
 
 
 

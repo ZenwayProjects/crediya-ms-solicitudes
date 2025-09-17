@@ -27,7 +27,7 @@ cors:
   allowed-origins: "http://localhost:4200,http://localhost:8080,http://localhost:8081"
 adapters:
   r2dbc:
-    host: ${DB_HOST_SOLICITUDES}
+    host: "${DB_HOST_SOLICITUDES}"
     port: 3306
     database: "${DB_NAME_SOLICITUDES}"
     username: "${DB_USER_SOLICITUDES}"
@@ -35,7 +35,10 @@ adapters:
 adapter:
   restconsumer:
     timeout: 5000
-    url: ${AUTH_SERVICE_URL}
+    url: "${AUTH_SERVICE_URL}"
+  sqs:
+    region: "us-east-2"
+    queueUrl: "https://sqs.us-east-2.amazonaws.com/617669911828/cola-notificacion"
 resilience4j:
   circuitbreaker:
     instances:

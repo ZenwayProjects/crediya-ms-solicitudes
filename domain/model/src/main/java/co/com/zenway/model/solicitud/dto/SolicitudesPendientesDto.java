@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 @Data
 public class SolicitudesPendientesDto {
 
+    private Long idSolicitud;
     private BigDecimal monto;
     private Integer plazo;
     private String email;

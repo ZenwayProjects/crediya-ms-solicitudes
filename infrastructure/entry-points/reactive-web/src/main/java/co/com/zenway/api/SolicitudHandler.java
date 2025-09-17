@@ -1,5 +1,6 @@
 package co.com.zenway.api;
 
+import co.com.zenway.api.dto.ActualizarEstadoSolicitudRequest;
 import co.com.zenway.api.dto.SolicitudRegistroDTO;
 import co.com.zenway.api.exceptions.GlobalErrorHandler;
 import co.com.zenway.api.mapper.SolicitudMapper;
@@ -88,6 +89,24 @@ import static co.com.zenway.api.utils.LoggerConstantes.FLUJO_TERMINADO;
                     })
                     .doOnNext(resp -> log.info("Lista de solicitudes: {}", resp))
                     .doOnError(e -> log.error("Error al listar las solicitudes pendientes"))
+                    .doFinally(sig -> log.info(FLUJO_TERMINADO, sig))
+                    .onErrorResume(globalErrorHandler::handler);
+        }
+
+        public Mono<ServerResponse> actualizarEstadoSolicitud(ServerRequest serverRequest){
+            return serverRequest.principal()
+                    .cast(JwtAuthenticationToken.class)
+                    .flatMap(auth ->
+                        serverRequest.bodyToMono(ActualizarEstadoSolicitudRequest.class)
+                                .flatMap(req -> asesorSolicitudUseCase.actualizarEstadoSolicitud(req.getIdSolicitud(), req.getEstadoNuevo())
+                                        .flatMap(solicitud -> ServerResponse.ok()
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .bodyValue(solicitud)
+                                        )
+                                )
+                    )
+                    .doOnNext(resp -> log.info("Solicitud actualizada: {}", resp))
+                    .doOnError(e -> log.error("Error al actualizar el estado: {}", e.getMessage()))
                     .doFinally(sig -> log.info(FLUJO_TERMINADO, sig))
                     .onErrorResume(globalErrorHandler::handler);
         }

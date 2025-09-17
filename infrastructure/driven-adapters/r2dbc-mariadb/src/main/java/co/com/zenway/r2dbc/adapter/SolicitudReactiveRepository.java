@@ -1,19 +1,24 @@
 package co.com.zenway.r2dbc.adapter;
 
+import co.com.zenway.model.solicitud.Solicitud;
 import co.com.zenway.model.solicitud.dto.DeudaTotalAprobadaPorUsuarioDto;
 import co.com.zenway.model.solicitud.dto.SolicitudesPendientesDto;
 import co.com.zenway.r2dbc.entity.SolicitudEntity;
+import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.query.ReactiveQueryByExampleExecutor;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
 import java.util.List;
 
 public interface SolicitudReactiveRepository extends ReactiveCrudRepository<SolicitudEntity, Long>, ReactiveQueryByExampleExecutor<SolicitudEntity> {
 
     @Query("""
     SELECT
+        s.id_solicitud,
         s.monto,
         s.plazo,
         s.email,
@@ -48,6 +53,14 @@ public interface SolicitudReactiveRepository extends ReactiveCrudRepository<Soli
        """)
     Flux<DeudaTotalAprobadaPorUsuarioDto> obtenerDeudaTotalAprobadaQuery(
             @Param("emails") List<String> emails);
+
+
+    @Modifying
+    @Query("""
+     UPDATE solicitud SET id_estado = :nuevoEstado WHERE id_solicitud = :solicitudId
+     AND id_estado = 1
+    """)
+    Mono<Integer> actualizarEstadoSolicitudQuery(Long solicitudId, Short nuevoEstado);
 
 
 

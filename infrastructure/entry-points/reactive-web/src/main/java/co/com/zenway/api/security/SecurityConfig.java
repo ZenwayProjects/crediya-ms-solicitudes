@@ -39,6 +39,7 @@ public class SecurityConfig {
                         ).permitAll()
                         .pathMatchers(HttpMethod.POST,"/api/v1/solicitud").hasRole("CLIENTE")
                         .pathMatchers(HttpMethod.GET,"/api/v1/solicitud").hasAnyRole("ASESOR", "ADMINISTRADOR")
+                        .pathMatchers(HttpMethod.PUT,"/api/v1/solicitud/**").hasAnyRole("ASESOR", "ADMINISTRADOR")
                         .anyExchange().authenticated()
                 )
                 .exceptionHandling(ex ->

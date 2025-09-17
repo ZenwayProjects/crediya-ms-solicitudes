@@ -16,6 +16,10 @@ public interface SolicitudRepository {
 
     Flux<DeudaTotalAprobadaPorUsuarioDto> obtenerSumaDeudaTotalPorEmails(List<String> emails);
 
+    Mono<Solicitud> obtenerSolicitudPorId(Long solicitudId);
+
+    Mono<Long> actualizarEstadoSolicitud(Long solicitudId, Short nuevoEstado);
+
 
 
 
