@@ -140,4 +140,69 @@ class AsesorSolicitudUseCaseTest {
         verify(mensajeSQSRepository, never()).enviarNotificacionDeEstadoCredito(any());
     }
 
+
+    @Test
+    void buscarSolicitudesPendientes_usuarioNoEncontrado() {
+        SolicitudesPendientesDto dto = new SolicitudesPendientesDto();
+        dto.setEmail("x@mail.com");
+
+
+        when(solicitudRepository.obtenerSolicitudesPendientes(anyList(), anyInt(), any(), anyInt(), anyInt()))
+                .thenReturn(Flux.just(dto));
+
+
+        when(usuarioServiceRepository.buscarUsuariosPorEmail(anyList()))
+                .thenReturn(Flux.empty());
+
+
+        when(solicitudRepository.obtenerSumaDeudaTotalPorEmails(anyList()))
+                .thenReturn(Flux.empty());
+
+        StepVerifier.create(useCase.buscarSolicitudesPendientes(List.of("1"), "Personal", 0, 10))
+                .expectNextMatches(r -> r.getEmail().equals("x@mail.com") &&
+                        r.getNombre() == null &&
+                        r.getSalarioBase() == null &&
+                        r.getDeudaTotalAprobada().equals(BigDecimal.ZERO))
+                .verifyComplete();
+    }
+
+    @Test
+    void buscarSolicitudesPendientes_estadosSolicitudNull() {
+        SolicitudesPendientesDto dto = new SolicitudesPendientesDto();
+        dto.setEmail("a@mail.com");
+
+        when(solicitudRepository.obtenerSolicitudesPendientes(List.of("__VACIO__"), 0, "Personal", 10, 0))
+                .thenReturn(Flux.just(dto));
+        when(usuarioServiceRepository.buscarUsuariosPorEmail(anyList()))
+                .thenReturn(Flux.empty());
+        when(solicitudRepository.obtenerSumaDeudaTotalPorEmails(anyList()))
+                .thenReturn(Flux.empty());
+
+        StepVerifier.create(useCase.buscarSolicitudesPendientes(null, "Personal", 0, 10))
+                .expectNextMatches(r -> r.getEmail().equals("a@mail.com") &&
+                        r.getDeudaTotalAprobada().equals(BigDecimal.ZERO))
+                .verifyComplete();
+    }
+
+    @Test
+    void buscarSolicitudesPendientes_estadosSolicitudVacio() {
+        SolicitudesPendientesDto dto = new SolicitudesPendientesDto();
+        dto.setEmail("b@mail.com");
+
+        when(solicitudRepository.obtenerSolicitudesPendientes(List.of("__VACIO__"), 0, "Personal", 10, 0))
+                .thenReturn(Flux.just(dto));
+        when(usuarioServiceRepository.buscarUsuariosPorEmail(anyList()))
+                .thenReturn(Flux.empty());
+        when(solicitudRepository.obtenerSumaDeudaTotalPorEmails(anyList()))
+                .thenReturn(Flux.empty());
+
+        StepVerifier.create(useCase.buscarSolicitudesPendientes(List.of(), "Personal", 0, 10))
+                .expectNextMatches(r -> r.getEmail().equals("b@mail.com") &&
+                        r.getDeudaTotalAprobada().equals(BigDecimal.ZERO))
+                .verifyComplete();
+    }
+
+
+
+
 }

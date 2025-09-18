@@ -26,11 +26,6 @@ public class AsesorSolicitudUseCase {
     private final UsuarioServiceRepository usuarioServiceRepository;
     private final MensajeSQSRepository mensajeSQSRepository;
 
-
-
-
-
-
     public Flux<SolicitudesPendientesDto> buscarSolicitudesPendientes(
             List<String> estadosSolicitud,
             String tipoPrestamoNombre,

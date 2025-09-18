@@ -5,6 +5,7 @@ import co.com.zenway.api.dto.SolicitudRegistroDTO;
 import co.com.zenway.api.dto.SolicitudResponseDTO;
 import co.com.zenway.model.solicitud.dto.SolicitudesPendientesDto;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
@@ -78,6 +79,10 @@ public class SolicitudRouterDoc {
             beanMethod = "listarSolicitudesPendientes",
             operation = @Operation(
                     operationId = "listarSolicitudesPendientes",
+                    parameters = {
+                            @Parameter(name = "page", description = "Page number", example = "1", required = true),
+                            @Parameter(name = "size", description = "Size number", example = "10", required = true),
+                    },
                     summary = "Lista las solicitudes pendientes",
                     description = "Devuelve un listado paginado de solicitudes pendientes con información adicional del usuario",
                     responses = {
