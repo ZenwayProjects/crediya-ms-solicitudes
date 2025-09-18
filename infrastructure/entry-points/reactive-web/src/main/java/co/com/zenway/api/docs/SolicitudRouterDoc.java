@@ -4,6 +4,7 @@ import co.com.zenway.api.SolicitudHandler;
 import co.com.zenway.api.dto.ActualizarEstadoSolicitudRequest;
 import co.com.zenway.api.dto.SolicitudRegistroDTO;
 import co.com.zenway.api.dto.SolicitudResponseDTO;
+import co.com.zenway.model.solicitud.Solicitud;
 import co.com.zenway.model.solicitud.dto.SolicitudesPendientesDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -128,7 +129,7 @@ public class SolicitudRouterDoc {
                                     description = "Solicitud actualizada correctamente",
                                     content = @Content(
                                             mediaType = "application/json",
-                                            schema = @Schema(implementation = SolicitudResponseDTO.class)
+                                            schema = @Schema(implementation = Solicitud.class)
                                     )
                             ),
                             @ApiResponse(
