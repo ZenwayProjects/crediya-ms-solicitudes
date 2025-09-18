@@ -1,6 +1,7 @@
 package co.com.zenway.api.docs;
 
 import co.com.zenway.api.SolicitudHandler;
+import co.com.zenway.api.dto.ActualizarEstadoSolicitudRequest;
 import co.com.zenway.api.dto.SolicitudRegistroDTO;
 import co.com.zenway.api.dto.SolicitudResponseDTO;
 import co.com.zenway.model.solicitud.dto.SolicitudesPendientesDto;
@@ -17,8 +18,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
-import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
-import static org.springframework.web.reactive.function.server.RequestPredicates.POST;
+import static org.springframework.web.reactive.function.server.RequestPredicates.*;
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 
 @Configuration
@@ -103,5 +103,56 @@ public class SolicitudRouterDoc {
     public RouterFunction<ServerResponse> listarSolicitudesPendientesRoute(SolicitudHandler solicitudHandler) {
         return route(GET("/api/v1/solicitud"), solicitudHandler::listarSolicitudesPendientes);
     }
+
+    @Bean
+    @RouterOperation(
+            path = "/api/v1/solicitud",
+            produces = {"application/json; charset=UTF-8"},
+            method = RequestMethod.PUT, // o POST si prefieres
+            beanClass = SolicitudHandler.class,
+            beanMethod = "actualizarEstadoSolicitud",
+            operation = @Operation(
+                    operationId = "actualizarEstadoSolicitud",
+                    summary = "Actualiza el estado de una solicitud",
+                    description = "Recibe el ID de la solicitud y el nuevo estado, y devuelve la solicitud actualizada",
+                    requestBody = @RequestBody(
+                            required = true,
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = ActualizarEstadoSolicitudRequest.class)
+                            )
+                    ),
+                    responses = {
+                            @ApiResponse(
+                                    responseCode = "200",
+                                    description = "Solicitud actualizada correctamente",
+                                    content = @Content(
+                                            mediaType = "application/json",
+                                            schema = @Schema(implementation = SolicitudResponseDTO.class)
+                                    )
+                            ),
+                            @ApiResponse(
+                                    responseCode = "400",
+                                    description = "Solicitud inválida, datos incorrectos o incompletos"
+                            ),
+                            @ApiResponse(
+                                    responseCode = "401",
+                                    description = "Usuario no autenticado"
+                            ),
+                            @ApiResponse(
+                                    responseCode = "403",
+                                    description = "Acceso denegado, el usuario no tiene permisos para realizar esta acción"
+                            ),
+                            @ApiResponse(
+                                    responseCode = "500",
+                                    description = "Error interno del servidor"
+                            )
+                    }
+            )
+    )
+    public RouterFunction<ServerResponse> actualizarEstadoSolicitudRoute(SolicitudHandler solicitudHandler) {
+        return route(PUT("/api/v1/solicitud"), solicitudHandler::actualizarEstadoSolicitud);
+    }
+
 
 }
