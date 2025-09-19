@@ -25,7 +25,9 @@ public class SolicitudUseCase {
         return validarTipoSolicitudPorId(solicitud.getTipoPrestamoId())
                 .then(tipoPrestamoRepository.buscarPorId(solicitud.getTipoPrestamoId()))
                 .flatMap(tipoPrestamo -> {
+                    if(tipoPrestamo.getValidacionAutomatica().equals(Boolean.TRUE)){
 
+                    }
                     if(solicitud.getMonto().compareTo(tipoPrestamo.getMontoMaximo()) > 0 ||
                             solicitud.getMonto().compareTo(tipoPrestamo.getMontoMinimo())< 0){
 
