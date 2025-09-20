@@ -51,7 +51,7 @@ class SolicitudUseCaseTest {
         when(tipoPrestamoRepository.buscarPorId((short) 1)).thenReturn(Mono.just(tipo));
         when(usuarioServiceRepository.obtenerUsuarioInfoPorDocumento("123"))
                 .thenReturn(Mono.just(usuarioInfo));
-        when(solicitudRepository.enviarSolicitudDePrestamo(any(Solicitud.class)))
+        when(solicitudRepository.guardarSolicitudDePrestamo(any(Solicitud.class)))
                 .thenReturn(Mono.just(solicitud));
 
         // Act + Assert
@@ -60,7 +60,7 @@ class SolicitudUseCaseTest {
                         s.getEstadoId().equals((short) 1))
                 .verifyComplete();
 
-        verify(solicitudRepository).enviarSolicitudDePrestamo(any(Solicitud.class));
+        verify(solicitudRepository).guardarSolicitudDePrestamo(any(Solicitud.class));
     }
 
     @Test
@@ -80,7 +80,7 @@ class SolicitudUseCaseTest {
                         e.getMessage().equals(ConstantesExceptions.TIPO_SOLICITUD_INVALIDO))
                 .verify();
 
-        verify(solicitudRepository, never()).enviarSolicitudDePrestamo(any());
+        verify(solicitudRepository, never()).guardarSolicitudDePrestamo(any());
     }
 
     @Test
@@ -103,7 +103,7 @@ class SolicitudUseCaseTest {
                         e.getMessage().equals(ConstantesExceptions.MONTO_DEL_PRESTAMO_INVALIDO))
                 .verify();
 
-        verify(solicitudRepository, never()).enviarSolicitudDePrestamo(any());
+        verify(solicitudRepository, never()).guardarSolicitudDePrestamo(any());
     }
 }
 

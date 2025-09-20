@@ -50,7 +50,9 @@ public class RestConsumer implements UsuarioServiceRepository/* implements Gatew
                             .bodyToMono(UsuarioInfoSolicitudResponseDTO.class)
                             .map(boundary -> new UsuarioInfoSolicitudDTO(
                                     boundary.id(),
-                                    boundary.email()
+                                    boundary.nombre(),
+                                    boundary.email(),
+                                    boundary.salarioBase()
                             ))
                             .doOnError(e -> log.info("Error al llamar el ms-auth: {} :{}", token, e.getMessage()));
                 });

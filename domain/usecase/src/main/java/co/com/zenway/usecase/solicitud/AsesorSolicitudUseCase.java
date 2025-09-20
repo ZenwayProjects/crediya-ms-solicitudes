@@ -1,11 +1,11 @@
 package co.com.zenway.usecase.solicitud;
 
-import co.com.zenway.model.sqs.MensajeSQSDto;
-import co.com.zenway.model.sqs.gateways.MensajeSQSRepository;
+import co.com.zenway.model.sqs.dto.MensajeCambioEstadoSolicitudSQSDto;
+import co.com.zenway.model.sqs.gateways.EventosSQSRepository;
 import co.com.zenway.model.Usuario.Usuario;
 import co.com.zenway.model.solicitud.Solicitud;
 import co.com.zenway.model.solicitud.dto.DeudaTotalAprobadaPorUsuarioDto;
-import co.com.zenway.model.solicitud.dto.SolicitudesPendientesDto;
+import co.com.zenway.model.solicitud.dto.SolicitudParaLambdaDto;
 import co.com.zenway.model.solicitud.gateways.SolicitudRepository;
 import co.com.zenway.model.solicitud.gateways.UsuarioServiceRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,9 +24,9 @@ public class AsesorSolicitudUseCase {
 
     private final SolicitudRepository solicitudRepository;
     private final UsuarioServiceRepository usuarioServiceRepository;
-    private final MensajeSQSRepository mensajeSQSRepository;
+    private final EventosSQSRepository eventosSQSRepository;
 
-    public Flux<SolicitudesPendientesDto> buscarSolicitudesPendientes(
+    public Flux<SolicitudParaLambdaDto> buscarSolicitudesPendientes(
             List<String> estadosSolicitud,
             String tipoPrestamoNombre,
             int page,
@@ -44,7 +44,7 @@ public class AsesorSolicitudUseCase {
                 .collectList()
                 .flatMapMany(solicitudesPendientesList -> {
                     List<String> emails = solicitudesPendientesList.stream()
-                            .map(SolicitudesPendientesDto::getEmail)
+                            .map(SolicitudParaLambdaDto::getEmail)
                             .filter(java.util.Objects::nonNull)
                             .distinct()
                             .toList();
@@ -90,12 +90,12 @@ public class AsesorSolicitudUseCase {
                         return solicitudRepository.obtenerSolicitudPorId(solicitudId)
                                 .flatMap(solicitud -> {
                                     if(nuevoEstadoId.equals(ESTADO_SOLICITUD_APROBADO)){
-                                        return mensajeSQSRepository
+                                        return eventosSQSRepository
                                                 .enviarNotificacionDeEstadoCredito(
                                                         buildMensajeAprobacion(solicitudId, CORREO_POR_DEFECTO, solicitud.getMonto()))
                                                 .thenReturn(solicitud);
                                     }
-                                    return mensajeSQSRepository
+                                    return eventosSQSRepository
                                             .enviarNotificacionDeEstadoCredito(
                                                     buildMensajeRechazo(solicitudId, CORREO_POR_DEFECTO, solicitud.getMonto()))
                                             .thenReturn(solicitud);
@@ -108,8 +108,8 @@ public class AsesorSolicitudUseCase {
     }
 
 
-    private MensajeSQSDto buildMensajeAprobacion(Long solicitudId, String email, BigDecimal monto) {
-        return new MensajeSQSDto(
+    private MensajeCambioEstadoSolicitudSQSDto buildMensajeAprobacion(Long solicitudId, String email, BigDecimal monto) {
+        return new MensajeCambioEstadoSolicitudSQSDto(
                 solicitudId,
                 email,
                 "Prueba de aprobación",
@@ -117,8 +117,8 @@ public class AsesorSolicitudUseCase {
         );
     }
 
-    private MensajeSQSDto buildMensajeRechazo(Long solicitudId, String email, BigDecimal monto) {
-        return new MensajeSQSDto(
+    private MensajeCambioEstadoSolicitudSQSDto buildMensajeRechazo(Long solicitudId, String email, BigDecimal monto) {
+        return new MensajeCambioEstadoSolicitudSQSDto(
                 solicitudId,
                 email,
                 "Prueba de rechazo",

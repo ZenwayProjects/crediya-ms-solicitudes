@@ -1,10 +1,13 @@
 package co.com.zenway.consumer.dto;
 
 
+import java.math.BigDecimal;
 
 public record UsuarioInfoSolicitudResponseDTO(
         Long id,
-        String email
+        String nombre,
+        String email,
+        BigDecimal salarioBase
 ) {
 
 }

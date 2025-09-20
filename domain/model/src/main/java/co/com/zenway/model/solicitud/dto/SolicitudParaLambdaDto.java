@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class SolicitudesPendientesDto {
+public class SolicitudParaLambdaDto {
 
     private Long idSolicitud;
     private BigDecimal monto;

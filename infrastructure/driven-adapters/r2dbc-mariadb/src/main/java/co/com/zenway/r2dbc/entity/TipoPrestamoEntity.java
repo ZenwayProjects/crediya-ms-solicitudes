@@ -27,5 +27,8 @@ public class TipoPrestamoEntity {
     @Column("tasa_interes")
     private BigDecimal tasaInteres;
 
+    @Column("validacion_automatica")
+    private Boolean validacionAutomatica;
+
     
 }

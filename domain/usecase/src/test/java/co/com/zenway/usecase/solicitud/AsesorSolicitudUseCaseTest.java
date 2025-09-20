@@ -3,10 +3,10 @@ package co.com.zenway.usecase.solicitud;
 import co.com.zenway.model.Usuario.Usuario;
 import co.com.zenway.model.solicitud.Solicitud;
 import co.com.zenway.model.solicitud.dto.DeudaTotalAprobadaPorUsuarioDto;
-import co.com.zenway.model.solicitud.dto.SolicitudesPendientesDto;
+import co.com.zenway.model.solicitud.dto.SolicitudParaLambdaDto;
 import co.com.zenway.model.solicitud.gateways.SolicitudRepository;
 import co.com.zenway.model.solicitud.gateways.UsuarioServiceRepository;
-import co.com.zenway.model.sqs.gateways.MensajeSQSRepository;
+import co.com.zenway.model.sqs.gateways.EventosSQSRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
@@ -23,22 +23,22 @@ class AsesorSolicitudUseCaseTest {
 
     private SolicitudRepository solicitudRepository;
     private UsuarioServiceRepository usuarioServiceRepository;
-    private MensajeSQSRepository mensajeSQSRepository;
+    private EventosSQSRepository eventosSQSRepository;
     private AsesorSolicitudUseCase useCase;
 
     @BeforeEach
     void setUp() {
         solicitudRepository = mock(SolicitudRepository.class);
         usuarioServiceRepository = mock(UsuarioServiceRepository.class);
-        mensajeSQSRepository = mock(MensajeSQSRepository.class);
-        useCase = new AsesorSolicitudUseCase(solicitudRepository, usuarioServiceRepository, mensajeSQSRepository);
+        eventosSQSRepository = mock(EventosSQSRepository.class);
+        useCase = new AsesorSolicitudUseCase(solicitudRepository, usuarioServiceRepository, eventosSQSRepository);
     }
 
     @Test
     void buscarSolicitudesPendientes_conDatosDeUsuarioYDeuda() {
-        SolicitudesPendientesDto dto1 = new SolicitudesPendientesDto();
+        SolicitudParaLambdaDto dto1 = new SolicitudParaLambdaDto();
         dto1.setEmail("a@mail.com");
-        SolicitudesPendientesDto dto2 = new SolicitudesPendientesDto();
+        SolicitudParaLambdaDto dto2 = new SolicitudParaLambdaDto();
         dto2.setEmail("b@mail.com");
 
         Usuario usuarioA = new Usuario();
@@ -67,7 +67,7 @@ class AsesorSolicitudUseCaseTest {
 
     @Test
     void buscarSolicitudesPendientes_sinEmails() {
-        SolicitudesPendientesDto dto1 = new SolicitudesPendientesDto();
+        SolicitudParaLambdaDto dto1 = new SolicitudParaLambdaDto();
         dto1.setEmail(null);
 
         when(solicitudRepository.obtenerSolicitudesPendientes(anyList(), anyInt(), any(), anyInt(), anyInt()))
@@ -93,14 +93,14 @@ class AsesorSolicitudUseCaseTest {
                 .thenReturn(Mono.just(1L));
         when(solicitudRepository.obtenerSolicitudPorId(solicitudId))
                 .thenReturn(Mono.just(solicitud));
-        when(mensajeSQSRepository.enviarNotificacionDeEstadoCredito(any()))
+        when(eventosSQSRepository.enviarNotificacionDeEstadoCredito(any()))
                 .thenReturn(Mono.empty());
 
         StepVerifier.create(useCase.actualizarEstadoSolicitud(solicitudId, (short) 2))
                 .expectNext(solicitud)
                 .verifyComplete();
 
-        verify(mensajeSQSRepository).enviarNotificacionDeEstadoCredito(
+        verify(eventosSQSRepository).enviarNotificacionDeEstadoCredito(
                 argThat(m -> m.getAsunto().contains("aprobación")));
     }
 
@@ -115,14 +115,14 @@ class AsesorSolicitudUseCaseTest {
                 .thenReturn(Mono.just(1L));
         when(solicitudRepository.obtenerSolicitudPorId(solicitudId))
                 .thenReturn(Mono.just(solicitud));
-        when(mensajeSQSRepository.enviarNotificacionDeEstadoCredito(any()))
+        when(eventosSQSRepository.enviarNotificacionDeEstadoCredito(any()))
                 .thenReturn(Mono.empty());
 
         StepVerifier.create(useCase.actualizarEstadoSolicitud(solicitudId, (short) 3))
                 .expectNext(solicitud)
                 .verifyComplete();
 
-        verify(mensajeSQSRepository).enviarNotificacionDeEstadoCredito(
+        verify(eventosSQSRepository).enviarNotificacionDeEstadoCredito(
                 argThat(m -> m.getAsunto().contains("rechazo")));
     }
 
@@ -137,13 +137,13 @@ class AsesorSolicitudUseCaseTest {
                 .verify();
 
         verify(solicitudRepository, never()).obtenerSolicitudPorId(anyLong());
-        verify(mensajeSQSRepository, never()).enviarNotificacionDeEstadoCredito(any());
+        verify(eventosSQSRepository, never()).enviarNotificacionDeEstadoCredito(any());
     }
 
 
     @Test
     void buscarSolicitudesPendientes_usuarioNoEncontrado() {
-        SolicitudesPendientesDto dto = new SolicitudesPendientesDto();
+        SolicitudParaLambdaDto dto = new SolicitudParaLambdaDto();
         dto.setEmail("x@mail.com");
 
 
@@ -168,7 +168,7 @@ class AsesorSolicitudUseCaseTest {
 
     @Test
     void buscarSolicitudesPendientes_estadosSolicitudNull() {
-        SolicitudesPendientesDto dto = new SolicitudesPendientesDto();
+        SolicitudParaLambdaDto dto = new SolicitudParaLambdaDto();
         dto.setEmail("a@mail.com");
 
         when(solicitudRepository.obtenerSolicitudesPendientes(List.of("__VACIO__"), 0, "Personal", 10, 0))
@@ -186,7 +186,7 @@ class AsesorSolicitudUseCaseTest {
 
     @Test
     void buscarSolicitudesPendientes_estadosSolicitudVacio() {
-        SolicitudesPendientesDto dto = new SolicitudesPendientesDto();
+        SolicitudParaLambdaDto dto = new SolicitudParaLambdaDto();
         dto.setEmail("b@mail.com");
 
         when(solicitudRepository.obtenerSolicitudesPendientes(List.of("__VACIO__"), 0, "Personal", 10, 0))

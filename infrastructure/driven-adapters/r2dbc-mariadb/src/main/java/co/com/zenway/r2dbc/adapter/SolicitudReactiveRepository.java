@@ -1,16 +1,13 @@
 package co.com.zenway.r2dbc.adapter;
 
-import co.com.zenway.model.solicitud.Solicitud;
 import co.com.zenway.model.solicitud.dto.DeudaTotalAprobadaPorUsuarioDto;
-import co.com.zenway.model.solicitud.dto.SolicitudesPendientesDto;
+import co.com.zenway.model.solicitud.dto.SolicitudParaLambdaDto;
 import co.com.zenway.r2dbc.entity.SolicitudEntity;
-import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.query.ReactiveQueryByExampleExecutor;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -33,7 +30,7 @@ public interface SolicitudReactiveRepository extends ReactiveCrudRepository<Soli
     ORDER BY s.id_solicitud ASC
     LIMIT :limit OFFSET :offset
 """)
-    Flux<SolicitudesPendientesDto> obtenerSolicitudesPendientesQuery(
+    Flux<SolicitudParaLambdaDto> obtenerSolicitudesPorEstadoQuery(
             @Param("estados") List<String> estadosSolicitudNombre,
             @Param("estadosCount") int estadosCount,
             @Param("tipoPrestamoNombre") String tipoPrestamoNombre,
@@ -55,13 +52,26 @@ public interface SolicitudReactiveRepository extends ReactiveCrudRepository<Soli
             @Param("emails") List<String> emails);
 
 
-    @Modifying
-    @Query("""
-     UPDATE solicitud SET id_estado = :nuevoEstado WHERE id_solicitud = :solicitudId
-     AND id_estado = 1
-    """)
-    Mono<Integer> actualizarEstadoSolicitudQuery(Long solicitudId, Short nuevoEstado);
 
+    @Query("""
+    SELECT
+        s.id_solicitud,
+        s.monto,
+        s.plazo,
+        s.email,
+        tp.nombre AS tipo_prestamo,
+        tp.tasa_interes AS tasa_interes,
+        e.nombre AS estado_solicitud
+    FROM solicitud s
+    JOIN tipo_prestamo tp ON tp.id_tipo_prestamo = s.id_tipo_prestamo
+    JOIN estados e ON e.id_estado = s.id_estado
+    WHERE e.nombre = 'APROBADA'
+      AND s.email = :email
+    ORDER BY s.id_solicitud ASC
+""")
+    Flux<SolicitudParaLambdaDto> obtenerSolicitudesAprobadasPorUsuario(
+            @Param("email") String email
+    );
 
 
 

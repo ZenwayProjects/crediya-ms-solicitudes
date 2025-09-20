@@ -5,7 +5,7 @@ import co.com.zenway.api.dto.ActualizarEstadoSolicitudRequest;
 import co.com.zenway.api.dto.SolicitudRegistroDTO;
 import co.com.zenway.api.dto.SolicitudResponseDTO;
 import co.com.zenway.model.solicitud.Solicitud;
-import co.com.zenway.model.solicitud.dto.SolicitudesPendientesDto;
+import co.com.zenway.model.solicitud.dto.SolicitudParaLambdaDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -92,7 +92,7 @@ public class SolicitudRouterDoc {
                                     description = "Listado de solicitudes pendientes",
                                     content = @Content(
                                             mediaType = "application/json",
-                                            schema = @Schema(implementation = SolicitudesPendientesDto.class)
+                                            schema = @Schema(implementation = SolicitudParaLambdaDto.class)
                                     )
                             ),
                             @ApiResponse(responseCode = "401", description = "Usuario no autenticado"),

@@ -2,7 +2,7 @@ package co.com.zenway.r2dbc.adapter;
 
 import co.com.zenway.model.solicitud.Solicitud;
 import co.com.zenway.model.solicitud.dto.DeudaTotalAprobadaPorUsuarioDto;
-import co.com.zenway.model.solicitud.dto.SolicitudesPendientesDto;
+import co.com.zenway.model.solicitud.dto.SolicitudParaLambdaDto;
 import co.com.zenway.model.solicitud.gateways.SolicitudRepository;
 import co.com.zenway.r2dbc.entity.SolicitudEntity;
 import co.com.zenway.r2dbc.helper.ReactiveAdapterOperations;
@@ -37,14 +37,14 @@ public class SolicitudReactiveRepositoryAdapter extends ReactiveAdapterOperation
 
 
     @Override
-    public Mono<Solicitud> enviarSolicitudDePrestamo(Solicitud solicitud) {
+    public Mono<Solicitud> guardarSolicitudDePrestamo(Solicitud solicitud) {
         return this.save(solicitud).as(transactionalOperator::transactional);
     }
 
     @Override
-    public Flux<SolicitudesPendientesDto> obtenerSolicitudesPendientes(List<String> estadoSolicitud, int estadosContador,
-                                                                       String tipoPrestamoNombre, int limit, int offset) {
-        return repository.obtenerSolicitudesPendientesQuery(estadoSolicitud, estadosContador, tipoPrestamoNombre, limit, offset);
+    public Flux<SolicitudParaLambdaDto> obtenerSolicitudesPendientes(List<String> estadoSolicitud, int estadosContador,
+                                                                     String tipoPrestamoNombre, int limit, int offset) {
+        return repository.obtenerSolicitudesPorEstadoQuery(estadoSolicitud, estadosContador, tipoPrestamoNombre, limit, offset);
     }
 
     public Flux<DeudaTotalAprobadaPorUsuarioDto> obtenerSumaDeudaTotalPorEmails(List<String> emails) {
@@ -70,6 +70,11 @@ public class SolicitudReactiveRepositoryAdapter extends ReactiveAdapterOperation
                 .bind("solicitudId", solicitudId)
                 .fetch()
                 .rowsUpdated();
+    }
+
+    @Override
+    public Flux<SolicitudParaLambdaDto> obtenerSolicitudesAprobadasDelUsuario(String email) {
+        return repository.obtenerSolicitudesAprobadasPorUsuario(email);
     }
 
 
