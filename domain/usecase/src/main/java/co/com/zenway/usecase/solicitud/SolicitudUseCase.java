@@ -81,7 +81,7 @@ public class SolicitudUseCase {
                     solicitud.getMonto(),
                     solicitud.getPlazo(),
                     CORREO_POR_DEFECTO,
-                    null,
+                    usuarioInfoSolicitudDTO.nombre(),
                     tipoPrestamo.getNombre(),
                     tipoPrestamo.getTasaInteres(),
                     usuarioInfoSolicitudDTO.salarioBase(),

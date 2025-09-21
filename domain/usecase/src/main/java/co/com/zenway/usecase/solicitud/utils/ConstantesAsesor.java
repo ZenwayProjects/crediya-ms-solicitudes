@@ -6,6 +6,7 @@ public final class ConstantesAsesor {
         throw new AssertionError("No se debe instanciar esta clase");
     }
 
+    public static final Short ESTADO_SOLICITUD_EN_REVISION = 1;
     public static final Short ESTADO_SOLICITUD_APROBADO = 2;
     public static final Short ESTADO_SOLICITUD_RECHAZADO= 3;
 
