@@ -65,7 +65,7 @@ public interface SolicitudReactiveRepository extends ReactiveCrudRepository<Soli
     FROM solicitud s
     JOIN tipo_prestamo tp ON tp.id_tipo_prestamo = s.id_tipo_prestamo
     JOIN estados e ON e.id_estado = s.id_estado
-    WHERE e.nombre = 'APROBADA'
+    WHERE e.nombre = 'Aprobado'
       AND s.email = :email
     ORDER BY s.id_solicitud ASC
 """)
