@@ -18,7 +18,7 @@ import java.util.List;
 @Repository
 public class SolicitudReactiveRepositoryAdapter extends ReactiveAdapterOperations<
         Solicitud/* change for domain model */,
-        SolicitudEntity/* change for adapter model */,
+        SolicitudEntity,
     Long,
         SolicitudReactiveRepository
 > implements SolicitudRepository {
