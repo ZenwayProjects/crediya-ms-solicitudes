@@ -42,6 +42,7 @@ adapter:
       colaNotificacion: "https://sqs.us-east-2.amazonaws.com/617669911828/cola-notificacion"
       colaRegistroSolicitud: "https://sqs.us-east-2.amazonaws.com/617669911828/cola-registro-solicitud"
       colaResultadoAutovalidacion: "https://sqs.us-east-2.amazonaws.com/617669911828/cola-resultado-auto-validacion"
+      colaSolicitudAprobada: "https://sqs.us-east-2.amazonaws.com/617669911828/cola-solicitud-aprobada"
 resilience4j:
   circuitbreaker:
     instances:

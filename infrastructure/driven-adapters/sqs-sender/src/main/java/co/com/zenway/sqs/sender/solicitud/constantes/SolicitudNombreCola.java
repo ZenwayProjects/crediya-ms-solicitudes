@@ -3,7 +3,8 @@ package co.com.zenway.sqs.sender.solicitud.constantes;
 public enum SolicitudNombreCola {
     COLA_NOTIFICACION("colaNotificacion"),
     COLA_REGISTRO_SOLICITUD("colaRegistroSolicitud"),
-    COLA_RESULTADO_AUTOVALIDACION("colaResultadoAutovalidacion");
+    COLA_RESULTADO_AUTOVALIDACION("colaResultadoAutovalidacion"),
+    COLA_SOLICITUD_APROBADA("colaSolicitudAprobada");
 
     private final String key;
 

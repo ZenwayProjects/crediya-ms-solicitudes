@@ -2,6 +2,7 @@ package co.com.zenway.sqs.sender.solicitud;
 
 import co.com.zenway.model.solicitud.dto.SolicitudParaLambdaDto;
 import co.com.zenway.model.sqs.dto.MensajeCambioEstadoSolicitudSQSDto;
+import co.com.zenway.model.sqs.dto.SolicitudAprobadaEvent;
 import co.com.zenway.model.sqs.dto.SolicitudAutoValidacionSQSDto;
 import co.com.zenway.model.sqs.gateways.EventosSQSRepository;
 import co.com.zenway.sqs.sender.SQSSender;
@@ -14,8 +15,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
-import static co.com.zenway.sqs.sender.solicitud.constantes.SolicitudNombreCola.COLA_NOTIFICACION;
-import static co.com.zenway.sqs.sender.solicitud.constantes.SolicitudNombreCola.COLA_REGISTRO_SOLICITUD;
+import static co.com.zenway.sqs.sender.solicitud.constantes.SolicitudNombreCola.*;
 
 @Service
 @Log4j2
@@ -43,6 +43,22 @@ public class EventosSQSAdapter implements EventosSQSRepository {
                 })
                 .flatMap(json -> sender.send(COLA_REGISTRO_SOLICITUD, json))
                 .then();
+    }
+
+    @Override
+    public Mono<Void> enviarEventoSolicitudAprobada(SolicitudAprobadaEvent evento) {
+        return Mono.fromCallable(() -> {
+                    try {
+                        String json = objectMapper.writeValueAsString(evento);
+                        log.info("Enviando solicitud aprobada a cola [{}]: {}", COLA_SOLICITUD_APROBADA, json);
+                        return json;
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException("Error serializando evento solicitud aprobada", e);
+                    }
+                })
+                .flatMap(json -> sender.send(COLA_SOLICITUD_APROBADA, json))
+                .doOnSuccess(v -> log.info("Evento de solicitud aprobada enviado correctamente: {}", evento.getIdSolicitud()))
+                .doOnError(e -> log.error("Error enviando evento de solicitud aprobada", e)).then();
     }
 
 

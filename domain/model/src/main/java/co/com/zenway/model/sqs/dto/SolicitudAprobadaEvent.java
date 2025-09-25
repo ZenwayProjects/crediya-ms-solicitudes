@@ -7,12 +7,10 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class DecisionSolicitudDto {
+@AllArgsConstructor
+public class SolicitudAprobadaEvent {
     private Long idSolicitud;
-    private String email;
     private BigDecimal monto;
-    private String decision; // "APROBADO", "RECHAZADO", "REVISION MANUAL"
+    private String fechaAprobacion;
 }
-

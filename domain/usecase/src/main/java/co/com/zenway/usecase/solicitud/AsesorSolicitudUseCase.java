@@ -1,6 +1,7 @@
 package co.com.zenway.usecase.solicitud;
 
 import co.com.zenway.model.sqs.dto.MensajeCambioEstadoSolicitudSQSDto;
+import co.com.zenway.model.sqs.dto.SolicitudAprobadaEvent;
 import co.com.zenway.model.sqs.gateways.EventosSQSRepository;
 import co.com.zenway.model.Usuario.Usuario;
 import co.com.zenway.model.solicitud.Solicitud;
@@ -13,6 +14,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -83,28 +85,44 @@ public class AsesorSolicitudUseCase {
 
 
 
-    public Mono<Solicitud> actualizarEstadoSolicitud(Long solicitudId, Short nuevoEstadoId){
+    public Mono<Solicitud> actualizarEstadoSolicitud(Long solicitudId, Short nuevoEstadoId) {
         return solicitudRepository.actualizarEstadoSolicitud(solicitudId, nuevoEstadoId)
                 .flatMap(filasActualizadas -> {
-                    if(filasActualizadas > 0){
-                        return solicitudRepository.obtenerSolicitudPorId(solicitudId)
-                                .flatMap(solicitud -> {
-                                    if(nuevoEstadoId.equals(ESTADO_SOLICITUD_APROBADO)){
-                                        return eventosSQSRepository
-                                                .enviarNotificacionDeEstadoCredito(
-                                                        buildMensajeAprobacion(solicitudId, CORREO_POR_DEFECTO, solicitud.getMonto()))
-                                                .thenReturn(solicitud);
-                                    }
-                                    return eventosSQSRepository
-                                            .enviarNotificacionDeEstadoCredito(
-                                                    buildMensajeRechazo(solicitudId, CORREO_POR_DEFECTO, solicitud.getMonto()))
-                                            .thenReturn(solicitud);
-                                });
-
+                    if (filasActualizadas == 0) {
+                        return Mono.error(new IllegalStateException("No se actualiza ninguna solicitud"));
                     }
-
-                    return Mono.error(new IllegalStateException("No se actualiza ninguna solicitud"));
+                    return solicitudRepository.obtenerSolicitudPorId(solicitudId);
+                })
+                .flatMap(solicitud -> {
+                    if (nuevoEstadoId.equals(ESTADO_SOLICITUD_APROBADO)) {
+                        return manejarSolicitudAprobada(solicitud);
+                    } else {
+                        return manejarSolicitudRechazada(solicitud);
+                    }
                 });
+    }
+
+    private Mono<Solicitud> manejarSolicitudAprobada(Solicitud solicitud) {
+        var eventoSolicitudAprobada = new SolicitudAprobadaEvent(
+                solicitud.getId(),
+                solicitud.getMonto(),
+                Instant.now().toString()
+        );
+
+        return eventosSQSRepository.enviarNotificacionDeEstadoCredito(
+                        buildMensajeAprobacion(solicitud.getId(), CORREO_POR_DEFECTO, solicitud.getMonto()))
+                .then(eventosSQSRepository.enviarEventoSolicitudAprobada(eventoSolicitudAprobada)
+                        .onErrorResume(e -> {
+                            System.out.println("Error enviando a la cola de solicitud aprobada: " + e.getMessage());
+                            return Mono.empty();
+                        }))
+                .thenReturn(solicitud);
+    }
+
+    private Mono<Solicitud> manejarSolicitudRechazada(Solicitud solicitud) {
+        return eventosSQSRepository.enviarNotificacionDeEstadoCredito(
+                        buildMensajeRechazo(solicitud.getId(), CORREO_POR_DEFECTO, solicitud.getMonto()))
+                .thenReturn(solicitud);
     }
 
 
