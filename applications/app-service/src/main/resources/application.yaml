@@ -1,14 +1,74 @@
-##Spring Configuration
 server:
-  port: 8080
+  port: 8081
 spring:
   application:
-    name: solicitudes
+    name: "solicitudes"
   devtools:
     add-properties: false
   h2:
     console:
       enabled: true
-      path: /h2
+      path: "/h2"
   profiles:
-    include:
+    include: null
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,prometheus"
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  health:
+    circuitbreakers:
+      enabled: true
+cors:
+  allowed-origins: "http://localhost:4200,http://localhost:8080,http://localhost:8081,http://localhost:8082"
+adapters:
+  r2dbc:
+    host: "${DB_HOST_SOLICITUDES}"
+    port: 3306
+    database: "${DB_NAME_SOLICITUDES}"
+    username: "${DB_USER_SOLICITUDES}"
+    password: "${DB_PASSWORD_SOLICITUDES}"
+adapter:
+  restconsumer:
+    timeout: 5000
+    url: "${AUTH_SERVICE_URL}"
+  sqs:
+    region: "${SQS_REGION}"
+    queues:
+      colaNotificacion: "${SQS_COLA_NOTIFICACION}"
+      colaRegistroSolicitud: "${SQS_COLA_REGISTRO_SOLICITUD}"
+      colaResultadoAutovalidacion: "${SQS_COLA_RESULTADO_AUTOVALIDACION}"
+      colaSolicitudAprobada: "${SQS_COLA_SOLICITUD_APROBADA}"
+resilience4j:
+  circuitbreaker:
+    instances:
+      testGet:
+        registerHealthIndicator: true
+        failureRateThreshold: 50
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: "2s"
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 10
+        waitDurationInOpenState: "10s"
+      testPost:
+        registerHealthIndicator: true
+        failureRateThreshold: 50
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: "2s"
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 10
+        waitDurationInOpenState: "10s"
+entrypoint:
+  sqs:
+    region: "${SQS_REGION}"
+    queueUrl: "${SQS_COLA_RESULTADO_AUTOVALIDACION}"
+    waitTimeSeconds: 20
+    maxNumberOfMessages: 10
+    visibilityTimeoutSeconds: 10
+    numberOfThreads: 1

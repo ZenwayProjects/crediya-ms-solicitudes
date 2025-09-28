@@ -1,0 +1,113 @@
+package co.com.zenway.api;
+
+import co.com.zenway.api.dto.ActualizarEstadoSolicitudRequest;
+import co.com.zenway.api.dto.SolicitudRegistroDTO;
+import co.com.zenway.api.exceptions.GlobalErrorHandler;
+import co.com.zenway.api.mapper.SolicitudMapper;
+import co.com.zenway.usecase.solicitud.AsesorSolicitudUseCase;
+import co.com.zenway.usecase.solicitud.SolicitudUseCase;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.server.ServerRequest;
+import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Mono;
+
+import java.util.List;
+
+import static co.com.zenway.api.utils.LoggerConstantes.FLUJO_TERMINADO;
+
+@Component
+@RequiredArgsConstructor
+@Log4j2
+    public class SolicitudHandler {
+
+        private final SolicitudUseCase solicitudUseCase;
+        private final AsesorSolicitudUseCase asesorSolicitudUseCase;
+        private final SolicitudMapper solicitudMapper;
+        private final Validator validator;
+        private  final GlobalErrorHandler globalErrorHandler;
+
+        public Mono<ServerResponse> solicitarCredito(ServerRequest serverRequest) {
+            return serverRequest.principal()
+                    .cast(JwtAuthenticationToken.class)
+                    .flatMap(auth -> {
+                        String usuarioIdDelToken = auth.getToken().getSubject();
+
+                        return serverRequest
+                                .bodyToMono(SolicitudRegistroDTO.class)
+                                .doOnSubscribe(info -> log.info("Iniciando solicitud"))
+                                .switchIfEmpty(Mono.error(new IllegalArgumentException("Body requerido")))
+                                .flatMap(dto -> {
+                                    var violations = validator.validate(dto);
+                                    if(!violations.isEmpty()) return Mono.error(new ConstraintViolationException(violations));
+
+                                    return solicitudUseCase.obtenerUsuarioInfoPorDocumentoIdentidad(dto.getDocumentoIdentidad())
+                                            .flatMap(usuarioInfo -> {
+                                                if(!usuarioInfo.idUsuario().toString().equals(usuarioIdDelToken)){
+                                                    return Mono.error(new RuntimeException("No puedes crear solicitud para otro usuario"));
+                                                }
+
+                                        var solicitud = solicitudMapper.toModel(dto);
+                                        return solicitudUseCase.registrarSolicitud(solicitud, dto.getDocumentoIdentidad());
+                                            });
+                                })
+                                .map(solicitudMapper::toResponse)
+                                .flatMap(solicitudGuardada -> ServerResponse
+                                        .status(HttpStatus.CREATED)
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .bodyValue((solicitudGuardada)))
+                                .doOnNext(resp -> log.info("Solicitud de prestamo enviada: {}", resp))
+                                .doOnError(e -> log.error("Error al enviar la solicitud: {}", e.getMessage(), e))
+                                .doFinally(sig -> log.info(FLUJO_TERMINADO, sig))
+                                .onErrorResume(globalErrorHandler::handler);
+                    });
+        }
+
+        public Mono<ServerResponse> listarSolicitudesPendientes(ServerRequest serverRequest){
+            return serverRequest.principal()
+                    .cast(JwtAuthenticationToken.class)
+                    .flatMap(auth -> {
+                        List<String> estados = serverRequest.queryParams().get("estados");
+                        String tipoPrestamo = serverRequest.queryParam("tipoPrestamo").orElse(null);
+                        int page = Integer.parseInt(serverRequest.queryParam("page").orElse("0"));
+                        int size = Integer.parseInt(serverRequest.queryParam("size").orElse("10"));
+
+                        return asesorSolicitudUseCase
+                                .buscarSolicitudesPendientes(estados, tipoPrestamo, page, size)
+                                .collectList()
+                                .flatMap(listaSolicitudes ->
+                                    ServerResponse.ok()
+                                            .contentType(MediaType.APPLICATION_JSON)
+                                            .bodyValue(listaSolicitudes)
+                                );
+                    })
+                    .doOnNext(resp -> log.info("Lista de solicitudes: {}", resp))
+                    .doOnError(e -> log.error("Error al listar las solicitudes pendientes"))
+                    .doFinally(sig -> log.info(FLUJO_TERMINADO, sig))
+                    .onErrorResume(globalErrorHandler::handler);
+        }
+
+        public Mono<ServerResponse> actualizarEstadoSolicitud(ServerRequest serverRequest){
+            return serverRequest.principal()
+                    .cast(JwtAuthenticationToken.class)
+                    .flatMap(auth ->
+                        serverRequest.bodyToMono(ActualizarEstadoSolicitudRequest.class)
+                                .flatMap(req -> asesorSolicitudUseCase.actualizarEstadoSolicitud(req.getIdSolicitud(), req.getEstadoNuevo())
+                                        .flatMap(solicitud -> ServerResponse.ok()
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .bodyValue(solicitud)
+                                        )
+                                )
+                    )
+                    .doOnNext(resp -> log.info("Solicitud actualizada: {}", resp))
+                    .doOnError(e -> log.error("Error al actualizar el estado: {}", e.getMessage()))
+                    .doFinally(sig -> log.info(FLUJO_TERMINADO, sig))
+                    .onErrorResume(globalErrorHandler::handler);
+        }
+    }
